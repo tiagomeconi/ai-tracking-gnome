@@ -20,3 +20,38 @@ export function formatRemaining(resetsAt, now = new Date()) {
         return minutes > 0 ? `${hours} h ${minutes} min` : `${hours} h`;
     return `${minutes} min`;
 }
+
+/** Formata tempo decorrido desde fetchedAt como "agora mesmo" / "há 3 min". */
+export function formatElapsed(fetchedAt, now = new Date()) {
+    if (!fetchedAt)
+        return 'nunca atualizado';
+
+    const diffMs = now.getTime() - new Date(fetchedAt).getTime();
+    if (Number.isNaN(diffMs))
+        return 'desconhecido';
+    if (diffMs < 60_000)
+        return 'agora mesmo';
+
+    const minutes = Math.round(diffMs / 60_000);
+    if (minutes < 60)
+        return `há ${minutes} min`;
+
+    const hours = Math.round(minutes / 60);
+    if (hours < 24)
+        return `há ${hours} h`;
+
+    const days = Math.round(hours / 24);
+    return `há ${days} dia${days > 1 ? 's' : ''}`;
+}
+
+/** fetchedAt mais recente entre uma lista de AIProviderUsage, ou null. */
+export function mostRecentFetchedAt(usages) {
+    const timestamps = usages
+        .map((u) => Date.parse(u.fetchedAt))
+        .filter((ms) => !Number.isNaN(ms));
+
+    if (timestamps.length === 0)
+        return null;
+
+    return new Date(Math.max(...timestamps)).toISOString();
+}

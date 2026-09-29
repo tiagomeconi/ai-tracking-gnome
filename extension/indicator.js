@@ -7,14 +7,17 @@ import GLib from 'gi://GLib';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import { ProviderManager } from './lib/providerManager.js';
 import { UsageCache } from './lib/cache.js';
 import { MockProvider } from './lib/providers/mock.js';
+import { mostRecentFetchedAt } from './lib/format.js';
 import {
     buildProviderMenuItem,
     buildLoadingMenuItem,
     buildEmptyMenuItem,
+    buildFooterMenuItem,
 } from './menu.js';
 
 const REFRESH_INTERVAL_SECONDS = 300;
@@ -42,6 +45,7 @@ class AIUsageIndicator extends PanelMenu.Button {
 
         this._buildEmptyMenu();
         this._refreshTimeoutId = null;
+        this._refreshPromise = null;
 
         this.menu.connect('open-state-changed', (_menu, isOpen) => {
             if (isOpen)
@@ -68,8 +72,23 @@ class AIUsageIndicator extends PanelMenu.Button {
         );
     }
 
-    /** Dispara nova coleta (refresh manual ou automático). RF-04. */
-    async refresh() {
+    /**
+     * Dispara nova coleta (refresh manual ou automático). RF-04. Chamadas
+     * concorrentes (ex.: clique manual enquanto o polling automático já
+     * está em andamento) compartilham a mesma requisição em vez de disparar
+     * uma tempestade de fetches (critério de aceite da Fase 3).
+     */
+    refresh() {
+        if (this._refreshPromise)
+            return this._refreshPromise;
+
+        this._refreshPromise = this._doRefresh().finally(() => {
+            this._refreshPromise = null;
+        });
+        return this._refreshPromise;
+    }
+
+    async _doRefresh() {
         try {
             const usages = await this._manager.fetchAll();
             this._cache.setAll(usages);
@@ -96,6 +115,10 @@ class AIUsageIndicator extends PanelMenu.Button {
         this.menu.removeAll();
         for (const usage of usages)
             this.menu.addMenuItem(buildProviderMenuItem(usage));
+
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        const lastFetchedAt = mostRecentFetchedAt(usages);
+        this.menu.addMenuItem(buildFooterMenuItem(lastFetchedAt, () => this.refresh()));
     }
 
     destroy() {

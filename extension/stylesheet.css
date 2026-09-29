@@ -67,3 +67,22 @@
     font-style: italic;
     color: #999999;
 }
+
+.ai-usage-footer {
+    padding: 6px 12px;
+    spacing: 8px;
+}
+
+.ai-usage-footer-label {
+    font-size: 0.85em;
+    color: #999999;
+}
+
+.ai-usage-footer-button {
+    padding: 4px;
+    border-radius: 4px;
+}
+
+.ai-usage-footer-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}

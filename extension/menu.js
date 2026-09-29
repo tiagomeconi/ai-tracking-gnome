@@ -8,7 +8,7 @@ import Clutter from 'gi://Clutter';
 import PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import { computePercent, visualStateFromPercent } from './lib/normalizer.js';
-import { formatRemaining } from './lib/format.js';
+import { formatRemaining, formatElapsed } from './lib/format.js';
 
 const STATE_STYLE_CLASS = {
     normal: 'ai-usage-bar-fill-normal',
@@ -119,5 +119,38 @@ export function buildEmptyMenuItem() {
         text: 'Nenhum provider configurado',
         style_class: 'ai-usage-loading',
     }));
+    return item;
+}
+
+/**
+ * Rodapé do popup (seção 10.2): "Atualizado há X" + botão de refresh manual.
+ * @param {string|null} lastFetchedAt - fetchedAt mais recente entre os
+ *   providers exibidos, ou null se nenhum ainda foi buscado.
+ * @param {() => void} onRefresh
+ */
+export function buildFooterMenuItem(lastFetchedAt, onRefresh) {
+    const item = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
+
+    const box = new St.BoxLayout({ x_expand: true, style_class: 'ai-usage-footer' });
+
+    const label = new St.Label({
+        text: formatElapsed(lastFetchedAt),
+        x_expand: true,
+        y_align: Clutter.ActorAlign.CENTER,
+        style_class: 'ai-usage-footer-label',
+    });
+    box.add_child(label);
+
+    const refreshButton = new St.Button({
+        style_class: 'ai-usage-footer-button',
+        child: new St.Icon({ icon_name: 'view-refresh-symbolic', icon_size: 16 }),
+        reactive: true,
+        can_focus: true,
+        track_hover: true,
+    });
+    refreshButton.connect('clicked', () => onRefresh?.());
+    box.add_child(refreshButton);
+
+    item.add_child(box);
     return item;
 }

@@ -11,9 +11,10 @@ de verdade operacional deste projeto.
 
 ## Status atual
 
-Fase 1 (skeleton da extensão) e Fase 2 (modelo de domínio + MockProvider)
-implementadas com dados simulados. Ainda **não há providers reais** — ver
-seção 7 do plano e `docs/providers/` (pendente de pesquisa).
+Fases 1 (skeleton da extensão), 2 (modelo de domínio + MockProvider) e 3
+(cache, scheduler, timeout, retry com backoff) implementadas com dados
+simulados. Ainda **não há providers reais** — ver seção 7 do plano e
+`docs/providers/` (pendente de pesquisa).
 
 ### Limitações conhecidas desta entrega
 
@@ -65,9 +66,10 @@ extension/          extensão GNOME Shell (GNOME 45+, ver ADR-001)
 ├── lib/
 │   ├── types.js           modelo de domínio (JSDoc) + thresholds
 │   ├── normalizer.js      cálculo de percent/remaining/estado visual
-│   ├── format.js          formatação de tempo restante
+│   ├── format.js          formatação de tempo restante/decorrido
 │   ├── cache.js           cache em memória com detecção de stale
-│   ├── providerManager.js orquestra providers, isola falhas
+│   ├── retry.js           timeout + retry controlado com backoff
+│   ├── providerManager.js orquestra providers, isola falhas, aplica retry
 │   └── providers/
 │       ├── provider.js    contrato UsageProvider
 │       └── mock.js        MockProvider (todos os cenários da seção 6.1)
@@ -82,8 +84,10 @@ tests/               testes de domínio, rodados com `node --test`
 
 ## Próximos passos (ver seção 12/16 do plano)
 
-- Rodar manualmente os critérios de aceite de lifecycle da Fase 1.
-- Fase 3: scheduler completo com retry/backoff.
+- Rodar manualmente os critérios de aceite de lifecycle da Fase 1 e da
+  Fase 3 (popup abre com cache sem chamada de rede, refresh manual não
+  dispara tempestade de requests, falha de provider isolada).
+- Fase 4: avaliar se um serviço local separado é necessário (ADR-002).
 - Fase 5: Secret Service/GNOME Keyring para credenciais.
 - Fase 0 (pesquisa): produzir fichas em `docs/providers/` para
   ChatGPT/OpenAI, Claude/Anthropic, Gemini, Copilot antes de qualquer
