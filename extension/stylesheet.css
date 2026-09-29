@@ -1,0 +1,69 @@
+.ai-usage-provider-row {
+    padding: 6px 12px;
+    spacing: 2px;
+}
+
+.ai-usage-provider-name {
+    font-weight: bold;
+}
+
+.ai-usage-provider-status {
+    color: #cc4444;
+    font-style: italic;
+}
+
+.ai-usage-provider-stale {
+    color: #999999;
+    font-size: 0.85em;
+}
+
+.ai-usage-window-row {
+    margin-top: 4px;
+    spacing: 2px;
+}
+
+.ai-usage-bar-track {
+    height: 8px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+.ai-usage-bar-fill {
+    height: 8px;
+    border-radius: 4px;
+}
+
+.ai-usage-bar-fill-normal {
+    background-color: #3a9c3a;
+}
+
+.ai-usage-bar-fill-attention {
+    background-color: #d0a020;
+}
+
+.ai-usage-bar-fill-high {
+    background-color: #d97706;
+}
+
+.ai-usage-bar-fill-critical {
+    background-color: #cc3333;
+}
+
+.ai-usage-bar-fill-unknown {
+    background-color: #888888;
+}
+
+.ai-usage-window-label {
+    font-size: 0.9em;
+}
+
+.ai-usage-window-reset {
+    font-size: 0.8em;
+    color: #999999;
+}
+
+.ai-usage-loading {
+    padding: 8px 12px;
+    font-style: italic;
+    color: #999999;
+}

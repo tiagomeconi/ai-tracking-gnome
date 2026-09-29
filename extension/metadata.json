@@ -1,0 +1,8 @@
+{
+    "uuid": "ai-usage-monitor@prohound.io",
+    "name": "AI Usage Monitor",
+    "description": "Mostra na barra superior o consumo/cota de uso das suas assinaturas de IA (ChatGPT, Claude, Gemini, Copilot, ...).",
+    "shell-version": ["45", "46", "47", "48"],
+    "url": "",
+    "version-name": "0.1.0"
+}

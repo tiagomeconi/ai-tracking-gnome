@@ -1,0 +1,10 @@
+{
+    "name": "ai-usage-monitor",
+    "private": true,
+    "type": "module",
+    "version": "0.1.0",
+    "description": "Extensão GNOME Shell que monitora consumo/cota de assinaturas de IA.",
+    "scripts": {
+        "test": "node --test tests/*.test.js"
+    }
+}
