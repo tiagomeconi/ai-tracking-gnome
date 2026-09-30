@@ -49,7 +49,7 @@ export default class AIUsageMonitorPreferences extends ExtensionPreferences {
         const logoPath = GLib.build_filenamev([this.path, 'icons', 'logo.png']);
         if (GLib.file_test(logoPath, GLib.FileTest.EXISTS)) {
             const logo = Gtk.Image.new_from_file(logoPath);
-            logo.pixel_size = 48;
+            logo.pixel_size = 96;
             header.append(logo);
         }
 
