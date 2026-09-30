@@ -79,10 +79,15 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
             return this._result('error', [], 'PROVIDER_UNAVAILABLE');
         }
 
-        const status = message.get_status();
-        if (status === Soup.Status.UNAUTHORIZED)
+        // `message.get_status()` tenta marshalar o código HTTP para o enum
+        // Soup.Status, e lança "N is not a valid value for enumeration
+        // Status" quando o código não é um dos valores nomeados do enum
+        // nesta versão do libsoup (ex.: 429). `statusCode` é a propriedade
+        // GObject "status-code" (guint puro), sem essa validação.
+        const status = message.statusCode;
+        if (status === 401)
             return this._result('auth_required', [], 'PROVIDER_AUTH_REQUIRED');
-        if (status === Soup.Status.TOO_MANY_REQUESTS)
+        if (status === 429)
             return this._result('error', [], 'PROVIDER_RATE_LIMITED');
         if (status < 200 || status >= 300)
             return this._result('error', [], 'PROVIDER_INVALID_RESPONSE');
