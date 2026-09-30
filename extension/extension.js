@@ -8,7 +8,7 @@ import { AIUsageIndicator } from './indicator.js';
 
 export default class AIUsageMonitorExtension extends Extension {
     enable() {
-        this._indicator = new AIUsageIndicator(this.path);
+        this._indicator = new AIUsageIndicator(this);
         Main.panel.addToStatusArea(this.uuid, this._indicator);
     }
 

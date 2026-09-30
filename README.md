@@ -21,7 +21,9 @@ acionáveis, nomes acessíveis e foco visível no botão de refresh.
 
 **Claude e Codex já usam a cota REAL da assinatura** (EXPERIMENTAL,
 ADR-007 — reaproveita o login OAuth que os próprios CLIs oficiais já
-gravam) — Gemini/Copilot seguem com `MockProvider`.
+gravam) — Gemini/Copilot seguem com `MockProvider`. Fase 8 (Preferências,
+RF-05) implementada: botão de engrenagem no rodapé do popup abre uma
+janela GTK/Adwaita para ocultar/mostrar providers individualmente.
 
 ### Resultado da pesquisa de providers (seção 7 do plano)
 
@@ -82,6 +84,21 @@ extensão habilita sem erro, indicador aparece, popup abre/fecha, extensão
 desabilita limpamente, sem timers/signals órfãos após habilitar/desabilitar
 repetidamente.
 
+### Preferências (Fase 8)
+
+O schema do GSettings já vem compilado (`extension/schemas/gschemas.compiled`).
+Se você editar o `.gschema.xml`, recompile antes de testar:
+
+```bash
+glib-compile-schemas extension/schemas/
+```
+
+Abra as preferências pelo botão de engrenagem no rodapé do popup, ou via:
+
+```bash
+gnome-extensions prefs ai-usage-monitor@prohound.io
+```
+
 ## Ícones
 
 Coloque os ícones em `extension/icons/<nome>.{svg,png}` (svg tem
@@ -101,7 +118,9 @@ vez de quebrar.
 ```text
 extension/          extensão GNOME Shell (GNOME 45+, ver ADR-001)
 ├── extension.js     entry point (enable/disable)
-├── icons/           SVGs opcionais por provider (ver seção acima)
+├── prefs.js         janela de preferências (GTK4/Adwaita, Fase 8)
+├── schemas/         GSettings (disabled-providers, ver prefs.js)
+├── icons/           ícones opcionais por provider + logo (ver seção acima)
 ├── indicator.js      indicador da top bar + popup
 ├── menu.js            construção dos itens do popup
 ├── lib/

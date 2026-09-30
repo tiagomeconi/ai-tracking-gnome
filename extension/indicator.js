@@ -27,12 +27,19 @@ const REFRESH_INTERVAL_SECONDS = 300;
 
 export const AIUsageIndicator = GObject.registerClass(
 class AIUsageIndicator extends PanelMenu.Button {
-    _init(extensionPath) {
+    _init(extension) {
         super._init(0.0, 'AI Usage Monitor', false);
 
-        // Usado para resolver os ícones em icons/<providerId>.svg (ver
-        // menu.js). `extensionPath` vem de `Extension.path` (extension.js).
-        this._extensionPath = extensionPath ?? null;
+        // `extension` é a instância de `Extension` (extension.js). O path
+        // resolve os ícones em icons/<providerId>.{svg,png} (ver menu.js);
+        // settings é o GSettings do schema em schemas/*.gschema.xml (RF-05:
+        // providers ocultos pelas preferências).
+        this._extension = extension ?? null;
+        this._extensionPath = extension?.path ?? null;
+        this._settings = extension?.getSettings?.() ?? null;
+        this._settingsChangedId = this._settings?.connect('changed::disabled-providers', () => {
+            this._renderFromCache();
+        }) ?? null;
 
         // Claude e Codex usam a cota REAL da assinatura, reaproveitando o
         // login OAuth que os próprios CLIs oficiais já gravam — EXPERIMENTAL
@@ -108,7 +115,7 @@ class AIUsageIndicator extends PanelMenu.Button {
 
     async _doRefresh() {
         try {
-            const usages = await this._manager.fetchAll();
+            const usages = await this._manager.fetchAll(this._enabledProviderIds());
             this._cache.setAll(usages);
         } catch (error) {
             const log = typeof logError === 'function' ? logError : console.error;
@@ -117,8 +124,15 @@ class AIUsageIndicator extends PanelMenu.Button {
         this._renderFromCache();
     }
 
+    /** RF-05: providers listados em `disabled-providers` (preferências). */
+    _enabledProviderIds() {
+        const disabled = new Set(this._settings?.get_strv('disabled-providers') ?? []);
+        return new Set(this._manager.providers.map((p) => p.id).filter((id) => !disabled.has(id)));
+    }
+
     _renderFromCache() {
-        const usages = this._cache.getAll();
+        const enabledIds = this._enabledProviderIds();
+        const usages = this._cache.getAll().filter((u) => enabledIds.has(u.providerId));
 
         if (usages.length === 0) {
             this.menu.removeAll();
@@ -136,13 +150,21 @@ class AIUsageIndicator extends PanelMenu.Button {
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         const lastFetchedAt = mostRecentFetchedAt(usages);
-        this.menu.addMenuItem(buildFooterMenuItem(lastFetchedAt, () => this.refresh()));
+        this.menu.addMenuItem(buildFooterMenuItem(
+            lastFetchedAt,
+            () => this.refresh(),
+            this._extension ? () => this._extension.openPreferences() : null
+        ));
     }
 
     destroy() {
         if (this._refreshTimeoutId) {
             GLib.source_remove(this._refreshTimeoutId);
             this._refreshTimeoutId = null;
+        }
+        if (this._settings && this._settingsChangedId) {
+            this._settings.disconnect(this._settingsChangedId);
+            this._settingsChangedId = null;
         }
         super.destroy();
     }

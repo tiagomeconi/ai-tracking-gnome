@@ -43,6 +43,27 @@ test('MockProvider stale marca fetchedAt antigo e stale=true', async () => {
     assert.equal(usage.stale, true);
 });
 
+test('ProviderManager.fetchAll(enabledIds) só busca providers habilitados', async () => {
+    const manager = new ProviderManager([
+        new MockProvider('a', 'A', MockProvider.SCENARIOS.USAGE_20),
+        new MockProvider('b', 'B', MockProvider.SCENARIOS.USAGE_20),
+        new MockProvider('c', 'C', MockProvider.SCENARIOS.USAGE_20),
+    ], FAST_OPTS);
+
+    const results = await manager.fetchAll(new Set(['a', 'c']));
+    assert.deepEqual(results.map((r) => r.providerId).sort(), ['a', 'c']);
+});
+
+test('ProviderManager.fetchAll() sem argumento busca todos os providers', async () => {
+    const manager = new ProviderManager([
+        new MockProvider('a', 'A', MockProvider.SCENARIOS.USAGE_20),
+        new MockProvider('b', 'B', MockProvider.SCENARIOS.USAGE_20),
+    ], FAST_OPTS);
+
+    const results = await manager.fetchAll();
+    assert.equal(results.length, 2);
+});
+
 test('ProviderManager isola falha de um provider sem afetar os demais', async () => {
     class ThrowingProvider {
         id = 'broken';

@@ -40,10 +40,16 @@ export class ProviderManager {
      * Busca o uso de todos os providers configurados. Cada falha vira um
      * `AIProviderUsage` com status "error"/"auth_required", nunca uma
      * exceção propagada.
+     * @param {Set<string>|null} [enabledIds] - quando fornecido, só busca
+     *   providers cujo `id` esteja neste conjunto (RF-05: providers
+     *   ocultos pelas preferências não são consultados).
      * @returns {Promise<import('./types.js').AIProviderUsage[]>}
      */
-    async fetchAll() {
-        return Promise.all(this.providers.map((provider) => this._fetchOne(provider)));
+    async fetchAll(enabledIds = null) {
+        const providers = enabledIds
+            ? this.providers.filter((p) => enabledIds.has(p.id))
+            : this.providers;
+        return Promise.all(providers.map((provider) => this._fetchOne(provider)));
     }
 
     async _fetchOne(provider) {

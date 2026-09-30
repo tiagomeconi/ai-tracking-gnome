@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema id="org.gnome.shell.extensions.ai-usage-monitor"
+          path="/org/gnome/shell/extensions/ai-usage-monitor/">
+    <key name="disabled-providers" type="as">
+      <default>[]</default>
+      <summary>Providers ocultos</summary>
+      <description>
+        Lista de providerId (ex.: "claude", "codex", "gemini", "copilot")
+        ocultos do indicador e do popup. Configurado pela janela de
+        preferências da extensão (RF-05).
+      </description>
+    </key>
+  </schema>
+</schemalist>

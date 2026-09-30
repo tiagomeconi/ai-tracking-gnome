@@ -224,12 +224,14 @@ export function buildEmptyMenuItem() {
 }
 
 /**
- * Rodapé do popup (seção 10.2): "Atualizado há X" + botão de refresh manual.
+ * Rodapé do popup (seção 10.2): "Atualizado há X" + botão de refresh manual
+ * + botão de preferências (Fase 8, RF-05).
  * @param {string|null} lastFetchedAt - fetchedAt mais recente entre os
  *   providers exibidos, ou null se nenhum ainda foi buscado.
  * @param {() => void} onRefresh
+ * @param {(() => void)|null} [onOpenPreferences]
  */
-export function buildFooterMenuItem(lastFetchedAt, onRefresh) {
+export function buildFooterMenuItem(lastFetchedAt, onRefresh, onOpenPreferences = null) {
     const item = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
 
     const box = new St.BoxLayout({ x_expand: true, style_class: 'ai-usage-footer' });
@@ -252,6 +254,19 @@ export function buildFooterMenuItem(lastFetchedAt, onRefresh) {
     });
     refreshButton.connect('clicked', () => onRefresh?.());
     box.add_child(refreshButton);
+
+    if (onOpenPreferences) {
+        const settingsButton = new St.Button({
+            style_class: 'ai-usage-footer-button',
+            child: new St.Icon({ icon_name: 'preferences-system-symbolic', icon_size: 16 }),
+            reactive: true,
+            can_focus: true,
+            track_hover: true,
+            accessible_name: 'Abrir preferências da extensão',
+        });
+        settingsButton.connect('clicked', () => onOpenPreferences());
+        box.add_child(settingsButton);
+    }
 
     item.add_child(box);
     return item;
