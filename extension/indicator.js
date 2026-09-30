@@ -12,8 +12,8 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import { ProviderManager } from './lib/providerManager.js';
 import { UsageCache } from './lib/cache.js';
 import { MockProvider } from './lib/providers/mock.js';
-import { ClaudeCodeLocalProvider } from './lib/providers/claudeCodeLocal.js';
-import { CodexLocalProvider } from './lib/providers/codexLocal.js';
+import { ClaudeSubscriptionProvider } from './lib/providers/claudeSubscription.js';
+import { CodexSubscriptionProvider } from './lib/providers/codexSubscription.js';
 import { mostRecentFetchedAt } from './lib/format.js';
 import {
     buildProviderMenuItem,
@@ -29,14 +29,17 @@ class AIUsageIndicator extends PanelMenu.Button {
     _init() {
         super._init(0.0, 'AI Usage Monitor', false);
 
-        // Claude e Codex usam dado real local, mas EXPERIMENTAL — ver
-        // lib/providers/{claudeCodeLocal,codexLocal}.js e docs/providers/.
-        // Gemini segue em Mock até a investigação do Antigravity CLI.
-        // Copilot (único OFFICIAL_API) foi adiado a pedido do usuário.
+        // Claude e Codex usam a cota REAL da assinatura, reaproveitando o
+        // login OAuth que os próprios CLIs oficiais já gravam — EXPERIMENTAL
+        // (endpoint/protocolo não documentados publicamente), ver
+        // lib/providers/{claudeSubscription,codexSubscription}.js e
+        // docs/providers/ + ADR-007. Gemini segue em Mock (Antigravity CLI
+        // investigado, sem fonte viável). Copilot (único OFFICIAL_API) foi
+        // adiado a pedido do usuário.
         this._cache = new UsageCache();
         this._manager = new ProviderManager([
-            new ClaudeCodeLocalProvider(),
-            new CodexLocalProvider(),
+            new ClaudeSubscriptionProvider(),
+            new CodexSubscriptionProvider(),
             new MockProvider('gemini', 'Gemini', MockProvider.SCENARIOS.MULTI_WINDOW),
             new MockProvider('copilot', 'Copilot', MockProvider.SCENARIOS.USAGE_20),
         ]);

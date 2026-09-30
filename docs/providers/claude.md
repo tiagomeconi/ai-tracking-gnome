@@ -62,17 +62,27 @@ Status: Não há fonte oficial documentada, autenticável de forma suportada e
   Reavaliar se a Anthropic publicar uma API oficial no futuro.
 ```
 
-## Adendo — implementação EXPERIMENTAL (2026-09-29, ADR-005)
+## Adendo 1 — implementação EXPERIMENTAL v1, superada (2026-09-29, ADR-005)
 
-A pesquisa acima permanece válida: **não existe API oficial para a cota da
-assinatura**. Ainda assim, foi implementado um provider `EXPERIMENTAL`
-(`extension/lib/providers/claudeCodeLocal.js`) que lê localmente os
-transcripts JSONL que o próprio Claude Code grava em
-`~/.claude/projects/**/*.jsonl` (confirmado por inspeção direta destes
-arquivos neste ambiente) e soma tokens processados numa janela de 5h. Isto
-**não é a cota da assinatura** — é só volume de atividade local do Claude
-Code, sem `limit`/`percent` (nunca fabricados). Ver ADR-005 para detalhes,
-riscos e limitações completas.
+Primeira tentativa: um provider que lia localmente os transcripts JSONL do
+Claude Code e somava tokens processados numa janela de 5h — sem
+`limit`/`percent`, só volume de atividade local. Ver ADR-005. **Superado**
+pelo Adendo 2 abaixo.
+
+## Adendo 2 — cota REAL via token OAuth do CLI (2026-09-29, ADR-007)
+
+O usuário apontou o projeto open-source
+[tokidachi](https://github.com/Gaalbu/tokidachi) (MIT), que reaproveita o
+token OAuth que o próprio `claude auth login` já grava em
+`~/.claude/.credentials.json` para chamar
+`GET https://api.anthropic.com/api/oauth/usage` — o mesmo endpoint que o
+Claude Code usa internamente para `/usage`. Isso retorna o **percentual
+real** das janelas `five_hour`/`seven_day`/`seven_day_sonnet`/
+`seven_day_opus`, não uma estimativa. Implementado em
+`extension/lib/providers/claudeSubscription.js`. Endpoint não documentado
+publicamente pela Anthropic — classificação continua `EXPERIMENTAL`. Ver
+ADR-007 para detalhes completos, incluindo por que isto não é o mesmo que
+capturar cookies de sessão web (proibido pela seção 2.1).
 
 ## Resposta à pergunta obrigatória (seção 7.1)
 

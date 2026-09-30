@@ -19,8 +19,9 @@ adiada (ADR-002): o MVP roda tudo no processo da extensão. Passada de
 UI/UX (seção 10) aplicada: estado nunca só por cor, mensagens de erro
 acionáveis, nomes acessíveis e foco visível no botão de refresh.
 
-**Claude e Codex já usam dado real** (EXPERIMENTAL, ADR-005/ADR-006) —
-Gemini/Copilot seguem com `MockProvider`.
+**Claude e Codex já usam a cota REAL da assinatura** (EXPERIMENTAL,
+ADR-007 — reaproveita o login OAuth que os próprios CLIs oficiais já
+gravam) — Gemini/Copilot seguem com `MockProvider`.
 
 ### Resultado da pesquisa de providers (seção 7 do plano)
 
@@ -99,10 +100,10 @@ extension/          extensão GNOME Shell (GNOME 45+, ver ADR-001)
 │   └── providers/
 │       ├── provider.js               contrato UsageProvider
 │       ├── mock.js                   MockProvider (cenários da seção 6.1)
-│       ├── claudeCodeLocal.js        provider real EXPERIMENTAL (ADR-005)
-│       ├── claudeCodeLocalAggregate.js  parsing/agregação puros (testados)
-│       ├── codexLocal.js             provider real EXPERIMENTAL (ADR-006)
-│       └── codexLocalAggregate.js    agregação pura (testada)
+│       ├── claudeSubscription.js         provider real EXPERIMENTAL (ADR-007)
+│       ├── claudeSubscriptionParser.js   parser puro (testado)
+│       ├── codexSubscription.js          provider real EXPERIMENTAL (ADR-007)
+│       └── codexSubscriptionParser.js    parser puro (testado)
 └── stylesheet.css
 
 docs/
@@ -120,11 +121,14 @@ tests/               testes de domínio, rodados com `node --test`
 - Validar `SecretStore`/`LibsecretBackend` contra um Secret Service real
   (GNOME Keyring rodando de verdade), fora deste sandbox.
 - Claude e Codex agora usam providers reais **EXPERIMENTAL**
-  (`ClaudeCodeLocalProvider`/`CodexLocalProvider`, ADR-005/ADR-006): leem
-  localmente os dados que o Claude Code e o Codex CLI já gravam em disco
-  (JSONL e SQLite, respectivamente) e estimam tokens processados numa
-  janela de 5h. **Não é a cota da assinatura** — só atividade local, sem
-  `limit`/`percent`. Validar em runtime real.
+  (`ClaudeSubscriptionProvider`/`CodexSubscriptionProvider`, ADR-007):
+  reaproveitam o login OAuth que os próprios CLIs (`claude auth login` /
+  `codex login`) já gravam em disco para consultar a cota **real** da
+  assinatura (percentual de verdade, não estimativa) — abordagem
+  verificada a partir do projeto open-source
+  [tokidachi](https://github.com/Gaalbu/tokidachi) (MIT). Endpoint/
+  protocolo não documentados publicamente, então a classificação continua
+  `EXPERIMENTAL`. Validar em runtime real.
 - Gemini segue em Mock — Antigravity CLI investigado (banco de conversas +
   arquivo de estado), sem nenhum campo de token/cota encontrado. Ver
   adendo em `docs/providers/gemini.md`. Continua `UNAVAILABLE`.

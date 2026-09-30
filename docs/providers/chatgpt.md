@@ -56,16 +56,26 @@ Status: Nenhuma API oficial documentada expõe a cota da assinatura de
   confirmada).
 ```
 
-## Adendo — implementação EXPERIMENTAL (2026-09-29, ADR-006)
+## Adendo 1 — implementação EXPERIMENTAL v1, superada (2026-09-29, ADR-006)
 
-A pesquisa acima permanece válida para o chat "regular" do ChatGPT. Ainda
-assim, foi implementado um provider `EXPERIMENTAL`
-(`extension/lib/providers/codexLocal.js`) para o **Codex CLI**
-especificamente, lendo `~/.codex/state_5.sqlite` (schema confirmado por
-inspeção direta da instalação real do usuário) e somando tokens de threads
-recentes. Isto mede uso do Codex (agente de código), não o chat geral do
-ChatGPT, e não inclui `limit`/`percent` (nenhum campo de cota de conta foi
-confirmado no schema). Ver ADR-006 para detalhes completos.
+Primeira tentativa: um provider que lia `~/.codex/state_5.sqlite`
+(schema interno do Codex CLI) e somava `tokens_used` de threads recentes —
+sem `limit`/`percent` real, só volume local. Ver ADR-006. **Superado** pelo
+Adendo 2 abaixo.
+
+## Adendo 2 — cota REAL via `codex app-server` (2026-09-29, ADR-007)
+
+O usuário apontou o projeto open-source
+[tokidachi](https://github.com/Gaalbu/tokidachi) (MIT), que roda
+`codex app-server --stdio` (o próprio Codex CLI em modo servidor JSON-RPC)
+e chama o método `account/rateLimits/read`, obtendo o **percentual real**
+de uso (`usedPercent`) por janela (`primary`/`secondary`) e por bucket
+(`rateLimitsByLimitId`), incluindo `individualLimit.remainingPercent`.
+Implementado em `extension/lib/providers/codexSubscription.js`. Mede uso
+do **Codex** (agente de código), não o chat geral do ChatGPT — essa
+distinção continua válida. Método JSON-RPC não documentado publicamente
+como API externa estável — classificação continua `EXPERIMENTAL`. Ver
+ADR-007 para detalhes completos.
 
 ## Resposta à pergunta obrigatória (seção 7.1)
 
