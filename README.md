@@ -1,170 +1,95 @@
 # AI Usage Monitor for GNOME
 
-Extensão para GNOME Shell que centraliza, em um único indicador na barra
-superior, o consumo/cota de uso das assinaturas de IA configuradas pelo
-usuário (ChatGPT, Claude, Gemini, Copilot, ...). Monitora **consumo/cota**,
-não gastos monetários.
+Um indicador na barra superior do GNOME que mostra, de relance, o quanto
+das suas assinaturas de IA (Claude, ChatGPT/Codex, Gemini, GitHub Copilot)
+já foi consumido — sem precisar abrir cada app pra checar.
 
-O plano de execução completo (requisitos, arquitetura, fases, backlog,
-riscos) está em [`AI_Tracking_PLAN.md`](./AI_Tracking_PLAN.md) — é a fonte
-de verdade operacional deste projeto.
+> Monitora **consumo/cota**, nunca gastos em dinheiro.
 
-## Status atual
+## Por que isso existe
 
-Fases 1 (skeleton da extensão), 2 (modelo de domínio + MockProvider), 3
-(cache, scheduler, timeout, retry com backoff) e 5 (secret storage)
-implementadas. Fase 0 de pesquisa de providers concluída — ver
-`docs/providers/`. A Fase 4 (serviço/IPC separado) foi conscientemente
-adiada (ADR-002): o MVP roda tudo no processo da extensão. Passada de
-UI/UX (seção 10) aplicada: estado nunca só por cor, mensagens de erro
-acionáveis, nomes acessíveis e foco visível no botão de refresh.
+Se você usa mais de uma assinatura de IA no dia a dia, é fácil ser
+surpreendido por um limite batendo no meio de uma tarefa importante. Esta
+extensão junta tudo num só lugar: um clique na barra superior mostra
+quanto falta de cada uma, e quando renova.
 
-**Claude e Codex já usam a cota REAL da assinatura** (EXPERIMENTAL,
-ADR-007 — reaproveita o login OAuth que os próprios CLIs oficiais já
-gravam) — Gemini/Copilot seguem com `MockProvider`. Fase 8 (Preferências,
-RF-05) implementada: botão de engrenagem no rodapé do popup abre uma
-janela GTK/Adwaita para ocultar/mostrar providers individualmente.
+## O que já funciona
 
-### Resultado da pesquisa de providers (seção 7 do plano)
-
-| Provider | Classificação | Observação |
+| IA | Status | O que mostra |
 |---|---|---|
-| ChatGPT / OpenAI | `UNAVAILABLE` | Sem API oficial para cota da assinatura de consumidor; só existe API de billing por token da API para devs. |
-| Claude / Anthropic | `UNAVAILABLE` | Idem — Usage & Cost Admin API é explicitamente sobre a API para devs, indisponível para contas individuais. |
-| Gemini / Google | `UNAVAILABLE` | Idem — rate limits do AI Studio/Vertex são sobre a API para devs; a UI do app Gemini não tem API. |
-| GitHub Copilot | `OFFICIAL_API` | Único com API oficial de billing/usage (`/users/{username}/settings/billing/{premium_request,ai_credit}/usage`). Unidade atual ("AI credits") é monetária — compatível com `UsageUnit: "credits"` do modelo, desde que apresentada como cota, não como gasto (seção 1.1). |
+| **Claude** (Claude Code) | ✅ Dado real | Percentual real das janelas de 5h e 7 dias, direto da sua conta. |
+| **Codex** (ChatGPT) | ✅ Dado real | Percentual real da janela de 5h e semanal do Codex CLI. |
+| **Antigravity** (Gemini) | 🚧 Em desenvolvimento | Dados de demonstração por enquanto — nenhuma fonte real de cota foi encontrada ainda. |
+| **GitHub Copilot** | 🚧 Em desenvolvimento | Dados de demonstração por enquanto — a API oficial existe, integração real ainda não foi feita. |
 
-Fichas completas (fonte, autenticação, riscos, docs oficiais) em
-[`docs/providers/`](./docs/providers/). **Nenhum provider real foi
-implementado ainda** — isto é só a pesquisa exigida antes da Fase 6.
-Copilot é o candidato mais forte para "provider real #1".
+Claude e Codex funcionam reaproveitando o login que você já fez nos CLIs
+oficiais (`claude auth login` / `codex login`) — a extensão nunca pede
+senha, nunca acessa nada pela web, e nunca envia essa credencial pra
+nenhum lugar além da própria API oficial do provedor. Detalhes técnicos
+completos em [`docs/decisions/ADR-007-real-quota-via-cli-credentials.md`](./docs/decisions/ADR-007-real-quota-via-cli-credentials.md).
 
-### Limitações conhecidas desta entrega
+## Requisitos
 
-- Testada apenas via `npm test` (Node), que cobre a camada de domínio
-  (`extension/lib/**`). A camada de UI GNOME (`indicator.js`, `menu.js`,
-  `extension.js`) **não foi validada em runtime real**, pois este ambiente
-  de desenvolvimento não possui GNOME Shell instalado. Os critérios de
-  aceite de lifecycle (enable/disable, seção 12 do plano) precisam ser
-  verificados manualmente antes de considerar a Fase 1 concluída.
-- Suporte a GNOME 42–44 ainda não implementado — ver
-  [`docs/decisions/ADR-001-gnome-versions.md`](./docs/decisions/ADR-001-gnome-versions.md).
-- Sem serviço/daemon separado nesta fase (decisão registrada em
-  [`docs/decisions/ADR-002-mvp-no-daemon.md`](./docs/decisions/ADR-002-mvp-no-daemon.md)).
-- `SecretStore`/`LibsecretBackend` (Fase 5) seguem a API oficial documentada
-  do libsecret via GJS, mas **não foram exercitados contra um Secret
-  Service/GNOME Keyring real** — este sandbox não tem sessão D-Bus
-  disponível. Validar manualmente antes de usar com um provider real. Ver
-  [`docs/decisions/ADR-004-secret-storage.md`](./docs/decisions/ADR-004-secret-storage.md).
+- GNOME Shell 45 a 48 (testado em Zorin OS 18 / GNOME Shell 46).
+- Para dado real de **Claude**: [Claude Code](https://claude.com/claude-code) instalado e logado.
+- Para dado real de **Codex**: [Codex CLI](https://developers.openai.com/codex/cli) instalado e logado.
+- Sem essas ferramentas, a extensão continua funcionando normalmente com
+  os cards correspondentes mostrando "autenticação necessária".
 
-## Desenvolvimento
-
-### Testes de domínio (Node)
+## Instalação
 
 ```bash
-npm test
-```
-
-### Instalar a extensão localmente para testar no GNOME Shell
-
-```bash
-ln -s "$(pwd)/extension" ~/.local/share/gnome-shell/extensions/ai-usage-monitor@prohound.io
+git clone https://github.com/tiagomeconi/ai-tracking-gnome.git
+cd ai-tracking-gnome
+./scripts/install.sh
 ```
 
 Depois:
 
-- **Wayland:** faça logout/login e habilite a extensão com
-  `gnome-extensions enable ai-usage-monitor@prohound.io` (ou pelo app
-  Extensões).
-- **X11:** pode recarregar a Shell com `Alt+F2`, `r`, `Enter`, sem precisar
-  fazer logout.
+- **Wayland:** faça logout/login e habilite com `gnome-extensions enable
+  ai-usage-monitor@prohound.io`.
+- **X11:** aperte `Alt+F2`, digite `r`, `Enter` (recarrega a Shell sem
+  precisar logout), depois rode o comando de habilitar acima.
 
-Verifique os critérios de aceite da Fase 1 (seção 12 do plano):
-extensão habilita sem erro, indicador aparece, popup abre/fecha, extensão
-desabilita limpamente, sem timers/signals órfãos após habilitar/desabilitar
-repetidamente.
+Para desinstalar: `./scripts/uninstall.sh`.
 
-### Preferências (Fase 8)
+## Preferências
 
-O schema do GSettings já vem compilado (`extension/schemas/gschemas.compiled`).
-Se você editar o `.gschema.xml`, recompile antes de testar:
+Clique no ícone de engrenagem no rodapé do popup pra abrir as
+preferências — dá pra ocultar qualquer uma das IAs do indicador e do
+popup individualmente.
 
-```bash
-glib-compile-schemas extension/schemas/
-```
+## Privacidade e segurança
 
-Abra as preferências pelo botão de engrenagem no rodapé do popup, ou via:
+- Código 100% aberto — audite à vontade.
+- Nenhuma telemetria, nenhum servidor próprio: a extensão só fala
+  diretamente com as APIs oficiais dos provedores (Anthropic, OpenAI).
+- Nenhuma credencial é armazenada, logada ou enviada a terceiros — o
+  token do Claude Code, por exemplo, é lido em memória só para montar uma
+  requisição, nunca gravado em outro lugar.
+- Nada de scraping de páginas web nem captura de cookies de sessão do
+  navegador — só reaproveita o login que os próprios CLIs oficiais já
+  fazem.
 
-```bash
-gnome-extensions prefs ai-usage-monitor@prohound.io
-```
+## Feedback
 
-## Ícones
+Este projeto está sendo testado internamente. Encontrou um bug, uma IA
+que você gostaria de ver suportada, ou tem sugestão de UI? Abra uma
+[issue](https://github.com/tiagomeconi/ai-tracking-gnome/issues).
 
-Coloque os ícones em `extension/icons/<nome>.{svg,png}` (svg tem
-prioridade se os dois existirem):
+## Para desenvolvedores
 
-- `claude.{svg,png}`, `codex.{svg,png}`, `gemini.{svg,png}`,
-  `copilot.{svg,png}` — logo de cada provider, mostrado à esquerda do
-  nome no popup.
-- `logo.{svg,png}` — logo da própria extensão, mostrada no indicador da
-  barra superior.
+Estrutura do projeto, decisões de arquitetura (ADRs), pesquisa de cada
+provider e como rodar os testes estão em
+[`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md).
 
-Se o arquivo não existir, a extensão cai num ícone simbólico genérico em
-vez de quebrar.
+## Créditos
 
-## Estrutura
+A técnica de reaproveitar o login OAuth dos CLIs oficiais (Claude
+Code/Codex) para consultar a cota real foi verificada a partir do projeto
+open-source [tokidachi](https://github.com/Gaalbu/tokidachi) (MIT),
+de Gabriel Albuquerque.
 
-```text
-extension/          extensão GNOME Shell (GNOME 45+, ver ADR-001)
-├── extension.js     entry point (enable/disable)
-├── prefs.js         janela de preferências (GTK4/Adwaita, Fase 8)
-├── schemas/         GSettings (disabled-providers, ver prefs.js)
-├── icons/           ícones opcionais por provider + logo (ver seção acima)
-├── indicator.js      indicador da top bar + popup
-├── menu.js            construção dos itens do popup
-├── lib/
-│   ├── types.js           modelo de domínio (JSDoc) + thresholds
-│   ├── normalizer.js      cálculo de percent/remaining/estado visual
-│   ├── format.js          formatação de tempo restante/decorrido
-│   ├── cache.js           cache em memória com detecção de stale
-│   ├── retry.js           timeout + retry controlado com backoff
-│   ├── secrets.js         SecretStore (Secret Service/GNOME Keyring)
-│   ├── providerManager.js orquestra providers, isola falhas, aplica retry
-│   └── providers/
-│       ├── provider.js               contrato UsageProvider
-│       ├── mock.js                   MockProvider (cenários da seção 6.1)
-│       ├── claudeSubscription.js         provider real EXPERIMENTAL (ADR-007)
-│       ├── claudeSubscriptionParser.js   parser puro (testado)
-│       ├── codexSubscription.js          provider real EXPERIMENTAL (ADR-007)
-│       └── codexSubscriptionParser.js    parser puro (testado)
-└── stylesheet.css
+## Licença
 
-docs/
-├── decisions/       ADRs
-└── providers/       fichas de pesquisa por provider (seção 7, pendente)
-
-tests/               testes de domínio, rodados com `node --test`
-```
-
-## Próximos passos (ver seção 12/16 do plano)
-
-- Rodar manualmente os critérios de aceite de lifecycle da Fase 1 e da
-  Fase 3 (popup abre com cache sem chamada de rede, refresh manual não
-  dispara tempestade de requests, falha de provider isolada).
-- Validar `SecretStore`/`LibsecretBackend` contra um Secret Service real
-  (GNOME Keyring rodando de verdade), fora deste sandbox.
-- Claude e Codex agora usam providers reais **EXPERIMENTAL**
-  (`ClaudeSubscriptionProvider`/`CodexSubscriptionProvider`, ADR-007):
-  reaproveitam o login OAuth que os próprios CLIs (`claude auth login` /
-  `codex login`) já gravam em disco para consultar a cota **real** da
-  assinatura (percentual de verdade, não estimativa) — abordagem
-  verificada a partir do projeto open-source
-  [tokidachi](https://github.com/Gaalbu/tokidachi) (MIT). Endpoint/
-  protocolo não documentados publicamente, então a classificação continua
-  `EXPERIMENTAL`. Validar em runtime real.
-- Gemini segue em Mock — Antigravity CLI investigado (banco de conversas +
-  arquivo de estado), sem nenhum campo de token/cota encontrado. Ver
-  adendo em `docs/providers/gemini.md`. Continua `UNAVAILABLE`.
-- Fase 6 (GitHub Copilot, único `OFFICIAL_API`): adiado a pedido do
-  usuário.
+[MIT](./LICENSE)
