@@ -10,17 +10,33 @@ export class UsageProvider {
         this.name = name;
     }
 
-    /** @returns {Promise<boolean>} */
+    /**
+     * Providers com autenticação normalmente implementam isto consultando
+     * `SecretStore.has(this.id)` (ver lib/secrets.js, ADR-004).
+     * @returns {Promise<boolean>}
+     */
     async isConfigured() {
         throw new Error(`${this.constructor.name}.isConfigured() não implementado`);
     }
 
-    /** @returns {Promise<void>} */
-    async connect() {
+    /**
+     * Recebe a credencial digitada pelo usuário (tela de preferências,
+     * Fase 8) e a repassa a um `SecretStore` — nunca deve persisti-la em
+     * outro lugar (arquivo, GSettings, log). Providers sem autenticação
+     * podem não sobrescrever.
+     * @param {string} [secret]
+     * @returns {Promise<void>}
+     */
+    async connect(secret) {
         // Opcional: providers sem autenticação podem não sobrescrever.
     }
 
-    /** @returns {Promise<void>} */
+    /**
+     * Invalida/remove a credencial local (tipicamente via
+     * `SecretStore.clear(this.id)`). Opcional para providers sem
+     * autenticação.
+     * @returns {Promise<void>}
+     */
     async disconnect() {
         // Opcional.
     }

@@ -11,10 +11,12 @@ de verdade operacional deste projeto.
 
 ## Status atual
 
-Fases 1 (skeleton da extensão), 2 (modelo de domínio + MockProvider) e 3
-(cache, scheduler, timeout, retry com backoff) implementadas com dados
-simulados. Ainda **não há providers reais** — ver seção 7 do plano e
-`docs/providers/` (pendente de pesquisa).
+Fases 1 (skeleton da extensão), 2 (modelo de domínio + MockProvider), 3
+(cache, scheduler, timeout, retry com backoff) e 5 (secret storage)
+implementadas. Ainda **não há providers reais** — ver seção 7 do plano e
+`docs/providers/` (pendente de pesquisa). A Fase 4 (serviço/IPC separado)
+foi conscientemente adiada (ADR-002): o MVP roda tudo no processo da
+extensão.
 
 ### Limitações conhecidas desta entrega
 
@@ -28,6 +30,11 @@ simulados. Ainda **não há providers reais** — ver seção 7 do plano e
   [`docs/decisions/ADR-001-gnome-versions.md`](./docs/decisions/ADR-001-gnome-versions.md).
 - Sem serviço/daemon separado nesta fase (decisão registrada em
   [`docs/decisions/ADR-002-mvp-no-daemon.md`](./docs/decisions/ADR-002-mvp-no-daemon.md)).
+- `SecretStore`/`LibsecretBackend` (Fase 5) seguem a API oficial documentada
+  do libsecret via GJS, mas **não foram exercitados contra um Secret
+  Service/GNOME Keyring real** — este sandbox não tem sessão D-Bus
+  disponível. Validar manualmente antes de usar com um provider real. Ver
+  [`docs/decisions/ADR-004-secret-storage.md`](./docs/decisions/ADR-004-secret-storage.md).
 
 ## Desenvolvimento
 
@@ -69,6 +76,7 @@ extension/          extensão GNOME Shell (GNOME 45+, ver ADR-001)
 │   ├── format.js          formatação de tempo restante/decorrido
 │   ├── cache.js           cache em memória com detecção de stale
 │   ├── retry.js           timeout + retry controlado com backoff
+│   ├── secrets.js         SecretStore (Secret Service/GNOME Keyring)
 │   ├── providerManager.js orquestra providers, isola falhas, aplica retry
 │   └── providers/
 │       ├── provider.js    contrato UsageProvider
@@ -87,8 +95,9 @@ tests/               testes de domínio, rodados com `node --test`
 - Rodar manualmente os critérios de aceite de lifecycle da Fase 1 e da
   Fase 3 (popup abre com cache sem chamada de rede, refresh manual não
   dispara tempestade de requests, falha de provider isolada).
-- Fase 4: avaliar se um serviço local separado é necessário (ADR-002).
-- Fase 5: Secret Service/GNOME Keyring para credenciais.
+- Validar `SecretStore`/`LibsecretBackend` contra um Secret Service real
+  (GNOME Keyring rodando de verdade), fora deste sandbox.
 - Fase 0 (pesquisa): produzir fichas em `docs/providers/` para
   ChatGPT/OpenAI, Claude/Anthropic, Gemini, Copilot antes de qualquer
-  provider real (Fase 6).
+  provider real (Fase 6) — é o único bloqueador restante antes de ligar um
+  provider real ao `SecretStore` já implementado.
