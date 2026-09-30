@@ -237,7 +237,7 @@ export function buildFooterMenuItem(lastFetchedAt, onRefresh, onOpenPreferences 
 
     const box = new St.BoxLayout({ x_expand: true, style_class: 'ai-usage-footer' });
 
-    box.add_child(buildProviderIcon('logo', extensionPath, 16));
+    box.add_child(buildProviderIcon('logo', extensionPath, 32));
 
     const label = new St.Label({
         text: formatElapsed(lastFetchedAt),
