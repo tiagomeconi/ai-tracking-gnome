@@ -15,7 +15,9 @@ Fases 1 (skeleton da extensão), 2 (modelo de domínio + MockProvider), 3
 (cache, scheduler, timeout, retry com backoff) e 5 (secret storage)
 implementadas. Fase 0 de pesquisa de providers concluída — ver
 `docs/providers/`. A Fase 4 (serviço/IPC separado) foi conscientemente
-adiada (ADR-002): o MVP roda tudo no processo da extensão.
+adiada (ADR-002): o MVP roda tudo no processo da extensão. Passada de
+UI/UX (seção 10) aplicada: estado nunca só por cor, mensagens de erro
+acionáveis, nomes acessíveis e foco visível no botão de refresh.
 
 ### Resultado da pesquisa de providers (seção 7 do plano)
 

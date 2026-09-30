@@ -86,3 +86,8 @@
 .ai-usage-footer-button:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
+
+.ai-usage-footer-button:focus {
+    outline: 2px solid #5294e2;
+    background-color: rgba(255, 255, 255, 0.1);
+}

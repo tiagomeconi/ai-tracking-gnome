@@ -10,7 +10,7 @@ const FAST_OPTS = { retries: 0, backoffMs: 0, timeoutMs: 1000 };
 
 test('MockProvider cobre todos os cenários exigidos pela seção 6.1', async () => {
     for (const scenario of Object.values(MockProvider.SCENARIOS)) {
-        const provider = new MockProvider('mock', 'Mock', scenario);
+        const provider = new MockProvider('mock', 'Mock', scenario, 1);
         const usage = await provider.fetchUsage();
         assert.equal(usage.providerId, 'mock');
         assert.ok(usage.fetchedAt);

@@ -5,6 +5,7 @@
 
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
+import Atk from 'gi://Atk';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import { computePercent, visualStateFromPercent } from './lib/normalizer.js';
@@ -18,10 +19,23 @@ const STATE_STYLE_CLASS = {
     unknown: 'ai-usage-bar-fill-unknown',
 };
 
+// RF-03: o estado nunca pode ser comunicado só pela cor da barra — todo
+// estado tem uma palavra equivalente, usada no texto e no accessible_name.
+const STATE_LABEL = {
+    normal: 'Normal',
+    attention: 'Atenção',
+    high: 'Alto',
+    critical: 'Crítico',
+    unknown: 'Desconhecido',
+};
+
+// Mensagens acionáveis (seção 14: "a UI deve converter códigos técnicos em
+// mensagens úteis"). Preferências (Fase 8) ainda não existem, então o texto
+// não referencia uma tela específica — só orienta a ação esperada.
 const STATUS_LABEL = {
-    unavailable: 'Indisponível',
-    auth_required: 'Autenticação necessária',
-    error: 'Erro temporário',
+    unavailable: 'Indisponível no momento. Tentaremos de novo automaticamente.',
+    auth_required: 'Autenticação necessária. Reconecte esta conta para retomar o monitoramento.',
+    error: 'Erro temporário ao buscar os dados. Tentando de novo automaticamente.',
 };
 
 /**
@@ -35,6 +49,7 @@ export function buildProviderMenuItem(usage) {
         vertical: true,
         x_expand: true,
         style_class: 'ai-usage-provider-row',
+        accessible_role: Atk.Role.LABEL,
     });
 
     const header = new St.BoxLayout({ x_expand: true });
@@ -77,8 +92,14 @@ function buildWindowRow(window) {
 
     const percent = computePercent(window);
     const state = visualStateFromPercent(percent);
+    const stateLabel = STATE_LABEL[state];
 
-    const track = new St.Widget({ style_class: 'ai-usage-bar-track', x_expand: true });
+    const track = new St.Widget({
+        style_class: 'ai-usage-bar-track',
+        x_expand: true,
+        accessible_role: Atk.Role.PROGRESS_BAR,
+        accessible_name: `${window.label}: ${stateLabel}`,
+    });
     const fill = new St.Widget({
         style_class: `ai-usage-bar-fill ${STATE_STYLE_CLASS[state]}`,
     });
@@ -89,7 +110,10 @@ function buildWindowRow(window) {
     });
     row.add_child(track);
 
-    const percentText = typeof percent === 'number' ? `${Math.round(percent)}%` : 'desconhecido';
+    // O estado (Normal/Atenção/Alto/Crítico) sempre acompanha o percentual
+    // em texto — a cor da barra nunca é a única forma de comunicá-lo
+    // (RF-03, seção 10.4).
+    const percentText = typeof percent === 'number' ? `${Math.round(percent)}% · ${stateLabel}` : stateLabel;
     const label = new St.Label({
         text: `${window.label} — ${percentText}`,
         style_class: 'ai-usage-window-label',
@@ -147,6 +171,7 @@ export function buildFooterMenuItem(lastFetchedAt, onRefresh) {
         reactive: true,
         can_focus: true,
         track_hover: true,
+        accessible_name: 'Atualizar agora',
     });
     refreshButton.connect('clicked', () => onRefresh?.());
     box.add_child(refreshButton);

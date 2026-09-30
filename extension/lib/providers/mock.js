@@ -26,10 +26,13 @@ export class MockProvider extends UsageProvider {
      * @param {string} id
      * @param {string} name
      * @param {MockScenario} scenario
+     * @param {number} loadingDelayMs - atraso simulado do cenário LOADING;
+     *   configurável para não deixar os testes lentos.
      */
-    constructor(id, name, scenario = MockProvider.SCENARIOS.USAGE_20) {
+    constructor(id, name, scenario = MockProvider.SCENARIOS.USAGE_20, loadingDelayMs = 4000) {
         super(id, name);
         this.scenario = scenario;
+        this.loadingDelayMs = loadingDelayMs;
     }
 
     async isConfigured() {
@@ -54,14 +57,19 @@ export class MockProvider extends UsageProvider {
 
         switch (this.scenario) {
         case MockProvider.SCENARIOS.LOADING:
-            // A camada de UI trata "loading" como estado transitório antes
-            // de fetchUsage resolver; aqui simulamos apenas o formato caso
-            // seja consultado nesse meio-tempo (sem dado ainda disponível).
+            // "Loading" não é um ProviderStatus persistido — é o estado
+            // transitório que a UI mostra enquanto fetchUsage() ainda não
+            // resolveu (seção 10.3). Simulamos isso com uma resolução
+            // artificialmente lenta, para que o card "Carregando…" fique
+            // visível o suficiente para validar na UI real.
+            await new Promise((resolve) => setTimeout(resolve, this.loadingDelayMs));
             return {
-                ...base,
-                status: 'unavailable',
-                windows: [],
-                errorCode: undefined,
+                providerId: this.id,
+                providerName: this.name,
+                fetchedAt: new Date().toISOString(),
+                stale: false,
+                status: 'ok',
+                windows: [singleWindow({ used: 20, limit: 100, window: 'day', resetIn: 60 * 6 })],
             };
 
         case MockProvider.SCENARIOS.ERROR:
