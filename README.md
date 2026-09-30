@@ -13,10 +13,23 @@ de verdade operacional deste projeto.
 
 Fases 1 (skeleton da extensão), 2 (modelo de domínio + MockProvider), 3
 (cache, scheduler, timeout, retry com backoff) e 5 (secret storage)
-implementadas. Ainda **não há providers reais** — ver seção 7 do plano e
-`docs/providers/` (pendente de pesquisa). A Fase 4 (serviço/IPC separado)
-foi conscientemente adiada (ADR-002): o MVP roda tudo no processo da
-extensão.
+implementadas. Fase 0 de pesquisa de providers concluída — ver
+`docs/providers/`. A Fase 4 (serviço/IPC separado) foi conscientemente
+adiada (ADR-002): o MVP roda tudo no processo da extensão.
+
+### Resultado da pesquisa de providers (seção 7 do plano)
+
+| Provider | Classificação | Observação |
+|---|---|---|
+| ChatGPT / OpenAI | `UNAVAILABLE` | Sem API oficial para cota da assinatura de consumidor; só existe API de billing por token da API para devs. |
+| Claude / Anthropic | `UNAVAILABLE` | Idem — Usage & Cost Admin API é explicitamente sobre a API para devs, indisponível para contas individuais. |
+| Gemini / Google | `UNAVAILABLE` | Idem — rate limits do AI Studio/Vertex são sobre a API para devs; a UI do app Gemini não tem API. |
+| GitHub Copilot | `OFFICIAL_API` | Único com API oficial de billing/usage (`/users/{username}/settings/billing/{premium_request,ai_credit}/usage`). Unidade atual ("AI credits") é monetária — compatível com `UsageUnit: "credits"` do modelo, desde que apresentada como cota, não como gasto (seção 1.1). |
+
+Fichas completas (fonte, autenticação, riscos, docs oficiais) em
+[`docs/providers/`](./docs/providers/). **Nenhum provider real foi
+implementado ainda** — isto é só a pesquisa exigida antes da Fase 6.
+Copilot é o candidato mais forte para "provider real #1".
 
 ### Limitações conhecidas desta entrega
 
@@ -97,7 +110,9 @@ tests/               testes de domínio, rodados com `node --test`
   dispara tempestade de requests, falha de provider isolada).
 - Validar `SecretStore`/`LibsecretBackend` contra um Secret Service real
   (GNOME Keyring rodando de verdade), fora deste sandbox.
-- Fase 0 (pesquisa): produzir fichas em `docs/providers/` para
-  ChatGPT/OpenAI, Claude/Anthropic, Gemini, Copilot antes de qualquer
-  provider real (Fase 6) — é o único bloqueador restante antes de ligar um
-  provider real ao `SecretStore` já implementado.
+- Fase 6 (primeiro provider real): implementar o adapter do GitHub Copilot
+  (`OFFICIAL_API`, ver `docs/providers/copilot.md`), usando `SecretStore`
+  para o PAT do usuário.
+- ChatGPT, Claude e Gemini ficam `UNAVAILABLE` até que os respectivos
+  fornecedores publiquem uma API oficial de cota de assinatura — não
+  implementar via scraping/cookies de sessão (proibido pela seção 2.1).
