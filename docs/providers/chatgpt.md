@@ -56,6 +56,17 @@ Status: Nenhuma API oficial documentada expõe a cota da assinatura de
   confirmada).
 ```
 
+## Adendo — implementação EXPERIMENTAL (2026-09-29, ADR-006)
+
+A pesquisa acima permanece válida para o chat "regular" do ChatGPT. Ainda
+assim, foi implementado um provider `EXPERIMENTAL`
+(`extension/lib/providers/codexLocal.js`) para o **Codex CLI**
+especificamente, lendo `~/.codex/state_5.sqlite` (schema confirmado por
+inspeção direta da instalação real do usuário) e somando tokens de threads
+recentes. Isto mede uso do Codex (agente de código), não o chat geral do
+ChatGPT, e não inclui `limit`/`percent` (nenhum campo de cota de conta foi
+confirmado no schema). Ver ADR-006 para detalhes completos.
+
 ## Resposta à pergunta obrigatória (seção 7.1)
 
 A única API pública documentada (billing da plataforma para desenvolvedores)

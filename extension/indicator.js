@@ -13,6 +13,7 @@ import { ProviderManager } from './lib/providerManager.js';
 import { UsageCache } from './lib/cache.js';
 import { MockProvider } from './lib/providers/mock.js';
 import { ClaudeCodeLocalProvider } from './lib/providers/claudeCodeLocal.js';
+import { CodexLocalProvider } from './lib/providers/codexLocal.js';
 import { mostRecentFetchedAt } from './lib/format.js';
 import {
     buildProviderMenuItem,
@@ -28,15 +29,14 @@ class AIUsageIndicator extends PanelMenu.Button {
     _init() {
         super._init(0.0, 'AI Usage Monitor', false);
 
-        // ChatGPT/Gemini/Copilot seguem em Mock: nenhuma fonte local
-        // verificável foi encontrada para ChatGPT/Gemini (docs/providers/),
-        // e o Copilot (único OFFICIAL_API) foi adiado a pedido do usuário.
-        // Claude usa dado real, mas EXPERIMENTAL — ver
-        // lib/providers/claudeCodeLocal.js e docs/providers/claude.md.
+        // Claude e Codex usam dado real local, mas EXPERIMENTAL — ver
+        // lib/providers/{claudeCodeLocal,codexLocal}.js e docs/providers/.
+        // Gemini segue em Mock até a investigação do Antigravity CLI.
+        // Copilot (único OFFICIAL_API) foi adiado a pedido do usuário.
         this._cache = new UsageCache();
         this._manager = new ProviderManager([
             new ClaudeCodeLocalProvider(),
-            new MockProvider('chatgpt', 'ChatGPT', MockProvider.SCENARIOS.USAGE_75),
+            new CodexLocalProvider(),
             new MockProvider('gemini', 'Gemini', MockProvider.SCENARIOS.MULTI_WINDOW),
             new MockProvider('copilot', 'Copilot', MockProvider.SCENARIOS.USAGE_20),
         ]);
