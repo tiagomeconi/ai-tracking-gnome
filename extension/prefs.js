@@ -9,7 +9,11 @@
 import Adw from 'gi://Adw?version=1';
 import Gtk from 'gi://Gtk?version=4.0';
 
-import { ExtensionPreferences } from 'resource:///org/gnome/shell/extensions/prefs.js';
+// O app de preferências ("Extensões") roda separado do processo principal
+// da Shell e usa um namespace de recurso diferente do de extension.js —
+// confirmado comparando com outra extensão do usuário que já funciona
+// neste mesmo sistema (GNOME Shell 46).
+import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/extensions/prefs.js';
 
 // Lista de providers mostrada aqui é mantida manualmente, em espelho da
 // lista instanciada em indicator.js — os dois processos não compartilham
