@@ -3,8 +3,11 @@
 // em memória com extension.js/indicator.js, só o GSettings (schema em
 // schemas/org.gnome.shell.extensions.ai-usage-monitor.gschema.xml).
 
-import Adw from 'gi://Adw';
-import Gtk from 'gi://Gtk';
+// Versão explícita obrigatória: sem isso, a resolução do typelib pode ficar
+// ambígua se o sistema tiver GTK3 instalado ao lado do GTK4, quebrando o
+// carregamento inteiro do módulo de preferências.
+import Adw from 'gi://Adw?version=1';
+import Gtk from 'gi://Gtk?version=4.0';
 
 import { ExtensionPreferences } from 'resource:///org/gnome/shell/extensions/prefs.js';
 
