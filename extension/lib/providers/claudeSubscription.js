@@ -122,6 +122,7 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
         return {
             providerId: this.id,
             providerName: this.name,
+            manageUrl: 'https://claude.ai/settings/usage',
             status,
             windows,
             fetchedAt: new Date().toISOString(),

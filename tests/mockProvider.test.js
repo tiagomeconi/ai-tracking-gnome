@@ -18,6 +18,12 @@ test('MockProvider cobre todos os cenários exigidos pela seção 6.1', async ()
     }
 });
 
+test('MockProvider propaga manageUrl no resultado', async () => {
+    const provider = new MockProvider('mock', 'Mock', MockProvider.SCENARIOS.USAGE_20, 1, 'https://example.com/usage');
+    const usage = await provider.fetchUsage();
+    assert.equal(usage.manageUrl, 'https://example.com/usage');
+});
+
 test('MockProvider multi_window expõe mais de uma UsageWindow', async () => {
     const provider = new MockProvider('mock', 'Mock', MockProvider.SCENARIOS.MULTI_WINDOW);
     const usage = await provider.fetchUsage();

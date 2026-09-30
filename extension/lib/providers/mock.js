@@ -28,11 +28,13 @@ export class MockProvider extends UsageProvider {
      * @param {MockScenario} scenario
      * @param {number} loadingDelayMs - atraso simulado do cenário LOADING;
      *   configurável para não deixar os testes lentos.
+     * @param {string} [manageUrl] - link de billing/uso a abrir no popup.
      */
-    constructor(id, name, scenario = MockProvider.SCENARIOS.USAGE_20, loadingDelayMs = 4000) {
+    constructor(id, name, scenario = MockProvider.SCENARIOS.USAGE_20, loadingDelayMs = 4000, manageUrl) {
         super(id, name);
         this.scenario = scenario;
         this.loadingDelayMs = loadingDelayMs;
+        this.manageUrl = manageUrl;
     }
 
     async isConfigured() {
@@ -53,6 +55,7 @@ export class MockProvider extends UsageProvider {
             providerName: this.name,
             fetchedAt: nowIso,
             stale: false,
+            manageUrl: this.manageUrl,
         };
 
         switch (this.scenario) {
@@ -68,6 +71,7 @@ export class MockProvider extends UsageProvider {
                 providerName: this.name,
                 fetchedAt: new Date().toISOString(),
                 stale: false,
+                manageUrl: this.manageUrl,
                 status: 'ok',
                 windows: [singleWindow({ used: 20, limit: 100, window: 'day', resetIn: 60 * 6 })],
             };

@@ -38,6 +38,9 @@
  * @property {string} fetchedAt - ISO 8601
  * @property {boolean} stale
  * @property {string} [errorCode]
+ * @property {string} [manageUrl] - link para a página de uso/cobrança do
+ *   provedor (ex.: https://claude.ai/settings/usage), aberto pelo botão de
+ *   atalho no popup.
  */
 
 // Códigos de erro internos estáveis (seção 14 do plano).

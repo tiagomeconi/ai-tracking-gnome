@@ -6,6 +6,8 @@
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
 import Atk from 'gi://Atk';
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import { computePercent, visualStateFromPercent } from './lib/normalizer.js';
@@ -39,10 +41,51 @@ const STATUS_LABEL = {
 };
 
 /**
+ * Ícone do provider — carrega icons/<providerId>.svg dentro da extensão
+ * quando existir; cai num ícone simbólico genérico caso contrário (nunca
+ * quebra por falta de um asset opcional).
+ */
+function buildProviderIcon(providerId, extensionPath) {
+    if (extensionPath) {
+        const path = GLib.build_filenamev([extensionPath, 'icons', `${providerId}.svg`]);
+        if (GLib.file_test(path, GLib.FileTest.EXISTS)) {
+            return new St.Icon({
+                gicon: Gio.icon_new_for_string(path),
+                icon_size: 20,
+                style_class: 'ai-usage-provider-icon',
+            });
+        }
+    }
+    return new St.Icon({
+        icon_name: 'application-x-executable-symbolic',
+        icon_size: 20,
+        style_class: 'ai-usage-provider-icon',
+    });
+}
+
+/** Botão de atalho para a página de uso/cobrança do provider. */
+function buildManageLinkButton(manageUrl, providerName) {
+    const button = new St.Button({
+        style_class: 'ai-usage-manage-link',
+        child: new St.Label({ text: '↗', style_class: 'ai-usage-manage-link-glyph' }),
+        reactive: true,
+        can_focus: true,
+        track_hover: true,
+        accessible_name: `Abrir página de uso/cobrança de ${providerName}`,
+    });
+    button.connect('clicked', () => {
+        Gio.AppInfo.launch_default_for_uri(manageUrl, null);
+    });
+    return button;
+}
+
+/**
  * Cria um PopupMenu.PopupBaseMenuItem representando um provider.
  * @param {import('./lib/types.js').AIProviderUsage} usage
+ * @param {string|null} [extensionPath] - `Extension.path`, usado para
+ *   resolver o ícone do provider.
  */
-export function buildProviderMenuItem(usage) {
+export function buildProviderMenuItem(usage, extensionPath = null) {
     const item = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
 
     const box = new St.BoxLayout({
@@ -52,9 +95,20 @@ export function buildProviderMenuItem(usage) {
         accessible_role: Atk.Role.LABEL,
     });
 
-    const header = new St.BoxLayout({ x_expand: true });
-    const nameLabel = new St.Label({ text: usage.providerName, style_class: 'ai-usage-provider-name' });
+    const header = new St.BoxLayout({ x_expand: true, style_class: 'ai-usage-provider-header' });
+    header.add_child(buildProviderIcon(usage.providerId, extensionPath));
+
+    const nameLabel = new St.Label({
+        text: usage.providerName,
+        x_expand: true,
+        y_align: Clutter.ActorAlign.CENTER,
+        style_class: 'ai-usage-provider-name',
+    });
     header.add_child(nameLabel);
+
+    if (usage.manageUrl)
+        header.add_child(buildManageLinkButton(usage.manageUrl, usage.providerName));
+
     box.add_child(header);
 
     if (usage.accountLabel) {

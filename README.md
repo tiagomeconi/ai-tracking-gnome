@@ -82,11 +82,18 @@ extensão habilita sem erro, indicador aparece, popup abre/fecha, extensão
 desabilita limpamente, sem timers/signals órfãos após habilitar/desabilitar
 repetidamente.
 
+## Ícones dos providers
+
+Coloque os SVGs de cada provider em `extension/icons/<providerId>.svg`
+(`claude.svg`, `codex.svg`, `gemini.svg`, `copilot.svg`). Se o arquivo não
+existir, a extensão cai num ícone simbólico genérico em vez de quebrar.
+
 ## Estrutura
 
 ```text
 extension/          extensão GNOME Shell (GNOME 45+, ver ADR-001)
 ├── extension.js     entry point (enable/disable)
+├── icons/           SVGs opcionais por provider (ver seção acima)
 ├── indicator.js      indicador da top bar + popup
 ├── menu.js            construção dos itens do popup
 ├── lib/

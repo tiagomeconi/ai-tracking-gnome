@@ -26,8 +26,12 @@ const REFRESH_INTERVAL_SECONDS = 300;
 
 export const AIUsageIndicator = GObject.registerClass(
 class AIUsageIndicator extends PanelMenu.Button {
-    _init() {
+    _init(extensionPath) {
         super._init(0.0, 'AI Usage Monitor', false);
+
+        // Usado para resolver os ícones em icons/<providerId>.svg (ver
+        // menu.js). `extensionPath` vem de `Extension.path` (extension.js).
+        this._extensionPath = extensionPath ?? null;
 
         // Claude e Codex usam a cota REAL da assinatura, reaproveitando o
         // login OAuth que os próprios CLIs oficiais já gravam — EXPERIMENTAL
@@ -40,8 +44,8 @@ class AIUsageIndicator extends PanelMenu.Button {
         this._manager = new ProviderManager([
             new ClaudeSubscriptionProvider(),
             new CodexSubscriptionProvider(),
-            new MockProvider('gemini', 'Gemini', MockProvider.SCENARIOS.MULTI_WINDOW),
-            new MockProvider('copilot', 'Copilot', MockProvider.SCENARIOS.USAGE_20),
+            new MockProvider('gemini', 'Gemini', MockProvider.SCENARIOS.MULTI_WINDOW, 4000, 'https://gemini.google.com/'),
+            new MockProvider('copilot', 'Copilot', MockProvider.SCENARIOS.USAGE_20, 4000, 'https://github.com/settings/billing'),
         ]);
 
         this._label = new St.Label({
@@ -121,7 +125,7 @@ class AIUsageIndicator extends PanelMenu.Button {
 
         this.menu.removeAll();
         for (const usage of usages)
-            this.menu.addMenuItem(buildProviderMenuItem(usage));
+            this.menu.addMenuItem(buildProviderMenuItem(usage, this._extensionPath));
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         const lastFetchedAt = mostRecentFetchedAt(usages);

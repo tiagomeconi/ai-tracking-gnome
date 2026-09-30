@@ -3,8 +3,34 @@
     spacing: 2px;
 }
 
+.ai-usage-provider-header {
+    spacing: 8px;
+}
+
+.ai-usage-provider-icon {
+    border-radius: 4px;
+}
+
 .ai-usage-provider-name {
     font-weight: bold;
+}
+
+.ai-usage-manage-link {
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.ai-usage-manage-link:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.ai-usage-manage-link:focus {
+    outline: 2px solid #5294e2;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.ai-usage-manage-link-glyph {
+    font-size: 1.1em;
 }
 
 .ai-usage-provider-account-label {

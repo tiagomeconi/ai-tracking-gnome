@@ -146,6 +146,7 @@ export class CodexSubscriptionProvider extends UsageProvider {
         return {
             providerId: this.id,
             providerName: this.name,
+            manageUrl: 'https://chatgpt.com/codex/settings/usage',
             status,
             windows,
             fetchedAt: new Date().toISOString(),
