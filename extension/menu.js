@@ -41,26 +41,36 @@ const STATUS_LABEL = {
 };
 
 /**
- * Ícone do provider — carrega icons/<providerId>.svg dentro da extensão
- * quando existir; cai num ícone simbólico genérico caso contrário (nunca
- * quebra por falta de um asset opcional).
+ * Ícone do provider — carrega icons/<providerId>.{svg,png} dentro da
+ * extensão quando existir; cai num ícone simbólico genérico caso
+ * contrário (nunca quebra por falta de um asset opcional).
  */
-function buildProviderIcon(providerId, extensionPath) {
-    if (extensionPath) {
-        const path = GLib.build_filenamev([extensionPath, 'icons', `${providerId}.svg`]);
-        if (GLib.file_test(path, GLib.FileTest.EXISTS)) {
-            return new St.Icon({
-                gicon: Gio.icon_new_for_string(path),
-                icon_size: 20,
-                style_class: 'ai-usage-provider-icon',
-            });
-        }
+export function buildProviderIcon(providerId, extensionPath, iconSize = 20) {
+    const iconPath = findIconFile(providerId, extensionPath);
+    if (iconPath) {
+        return new St.Icon({
+            gicon: Gio.icon_new_for_string(iconPath),
+            icon_size: iconSize,
+            style_class: 'ai-usage-provider-icon',
+        });
     }
     return new St.Icon({
         icon_name: 'application-x-executable-symbolic',
-        icon_size: 20,
+        icon_size: iconSize,
         style_class: 'ai-usage-provider-icon',
     });
+}
+
+/** Procura icons/<id>.svg, depois icons/<id>.png; retorna o caminho ou null. */
+function findIconFile(id, extensionPath) {
+    if (!extensionPath)
+        return null;
+    for (const ext of ['svg', 'png']) {
+        const path = GLib.build_filenamev([extensionPath, 'icons', `${id}.${ext}`]);
+        if (GLib.file_test(path, GLib.FileTest.EXISTS))
+            return path;
+    }
+    return null;
 }
 
 /** Botão de atalho para a página de uso/cobrança do provider. */

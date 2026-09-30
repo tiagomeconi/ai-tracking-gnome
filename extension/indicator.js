@@ -20,6 +20,7 @@ import {
     buildLoadingMenuItem,
     buildEmptyMenuItem,
     buildFooterMenuItem,
+    buildProviderIcon,
 } from './menu.js';
 
 const REFRESH_INTERVAL_SECONDS = 300;
@@ -48,11 +49,17 @@ class AIUsageIndicator extends PanelMenu.Button {
             new MockProvider('copilot', 'Copilot', MockProvider.SCENARIOS.USAGE_20, 4000, 'https://github.com/settings/billing'),
         ]);
 
+        const box = new St.BoxLayout({ style_class: 'ai-usage-panel-box' });
+
+        box.add_child(buildProviderIcon('logo', this._extensionPath, 16));
+
         this._label = new St.Label({
             text: 'AI …',
             y_align: Clutter.ActorAlign.CENTER,
         });
-        this.add_child(this._label);
+        box.add_child(this._label);
+
+        this.add_child(box);
 
         this._buildEmptyMenu();
         this._refreshTimeoutId = null;

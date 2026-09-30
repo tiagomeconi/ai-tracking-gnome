@@ -82,11 +82,19 @@ extensão habilita sem erro, indicador aparece, popup abre/fecha, extensão
 desabilita limpamente, sem timers/signals órfãos após habilitar/desabilitar
 repetidamente.
 
-## Ícones dos providers
+## Ícones
 
-Coloque os SVGs de cada provider em `extension/icons/<providerId>.svg`
-(`claude.svg`, `codex.svg`, `gemini.svg`, `copilot.svg`). Se o arquivo não
-existir, a extensão cai num ícone simbólico genérico em vez de quebrar.
+Coloque os ícones em `extension/icons/<nome>.{svg,png}` (svg tem
+prioridade se os dois existirem):
+
+- `claude.{svg,png}`, `codex.{svg,png}`, `gemini.{svg,png}`,
+  `copilot.{svg,png}` — logo de cada provider, mostrado à esquerda do
+  nome no popup.
+- `logo.{svg,png}` — logo da própria extensão, mostrada no indicador da
+  barra superior.
+
+Se o arquivo não existir, a extensão cai num ícone simbólico genérico em
+vez de quebrar.
 
 ## Estrutura
 
