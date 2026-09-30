@@ -5,7 +5,7 @@
 
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
-import PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import { computePercent, visualStateFromPercent } from './lib/normalizer.js';
 import { formatRemaining, formatElapsed } from './lib/format.js';

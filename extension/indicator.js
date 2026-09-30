@@ -6,8 +6,8 @@ import GObject from 'gi://GObject';
 import GLib from 'gi://GLib';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
-import PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
-import PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import { ProviderManager } from './lib/providerManager.js';
 import { UsageCache } from './lib/cache.js';
