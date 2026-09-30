@@ -50,24 +50,26 @@ export class ClaudeCodeLocalProvider extends UsageProvider {
         const lines = lineArrays.flat();
 
         const { totalTokens, messageCount } = aggregateUsage(lines, WINDOW_MS);
-        const hasAnyData = files.length > 0;
 
+        // "Nenhum arquivo recente" é um resultado válido (usuário só não
+        // conversou com o Claude Code nas últimas 5h) — não deve virar
+        // "indisponível". `isConfigured()` já cobre o caso de o diretório
+        // nem existir (Claude Code nunca usado neste sistema).
         return {
             providerId: this.id,
             providerName: this.name,
             accountLabel: 'Estimativa local — não é a cota da assinatura claude.ai',
-            status: hasAnyData ? 'ok' : 'unavailable',
-            windows: hasAnyData ? [{
+            status: 'ok',
+            windows: [{
                 id: 'claude-code-tokens-5h',
                 label: `Tokens processados pelo Claude Code (${messageCount} mensagens, últimas 5h)`,
                 unit: 'tokens',
                 used: totalTokens,
                 window: '5h',
                 estimated: true,
-            }] : [],
+            }],
             fetchedAt: new Date().toISOString(),
             stale: false,
-            errorCode: hasAnyData ? undefined : 'PROVIDER_UNAVAILABLE',
         };
     }
 
@@ -90,8 +92,15 @@ export class ClaudeCodeLocalProvider extends UsageProvider {
                 GLib.PRIORITY_DEFAULT,
                 null
             );
-        } catch {
-            return []; // diretório não existe ou sem permissão — tratado como "sem dados"
+        } catch (error) {
+            // Diretório inexistente (ex.: usuário nunca rodou o Claude Code)
+            // é esperado e tratado como "sem dados". Qualquer outro erro
+            // (permissão, API do GJS) é logado — nunca falha silenciosamente,
+            // para não virar um "indisponível" sem pista nenhuma no log.
+            if (error?.matches?.(Gio.IOErrorEnum, Gio.IOErrorEnum.NOT_FOUND))
+                return [];
+            this._logError(error, `ClaudeCodeLocalProvider: falha ao listar "${dir}"`);
+            return [];
         }
 
         const found = [];
@@ -124,8 +133,14 @@ export class ClaudeCodeLocalProvider extends UsageProvider {
         try {
             const [contents] = await Gio.File.new_for_path(path).load_contents_async(null);
             return new TextDecoder('utf-8').decode(contents).split('\n');
-        } catch {
+        } catch (error) {
+            this._logError(error, `ClaudeCodeLocalProvider: falha ao ler "${path}"`);
             return [];
         }
+    }
+
+    _logError(error, message) {
+        const log = typeof logError === 'function' ? logError : console.error;
+        log(error, message);
     }
 }
