@@ -224,17 +224,20 @@ export function buildEmptyMenuItem() {
 }
 
 /**
- * Rodapé do popup (seção 10.2): "Atualizado há X" + botão de refresh manual
- * + botão de preferências (Fase 8, RF-05).
+ * Rodapé do popup (seção 10.2): logo da extensão + "Atualizado há X" +
+ * botão de refresh manual + botão de preferências (Fase 8, RF-05).
  * @param {string|null} lastFetchedAt - fetchedAt mais recente entre os
  *   providers exibidos, ou null se nenhum ainda foi buscado.
  * @param {() => void} onRefresh
  * @param {(() => void)|null} [onOpenPreferences]
+ * @param {string|null} [extensionPath]
  */
-export function buildFooterMenuItem(lastFetchedAt, onRefresh, onOpenPreferences = null) {
+export function buildFooterMenuItem(lastFetchedAt, onRefresh, onOpenPreferences = null, extensionPath = null) {
     const item = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
 
     const box = new St.BoxLayout({ x_expand: true, style_class: 'ai-usage-footer' });
+
+    box.add_child(buildProviderIcon('logo', extensionPath, 16));
 
     const label = new St.Label({
         text: formatElapsed(lastFetchedAt),

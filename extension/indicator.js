@@ -155,7 +155,8 @@ class AIUsageIndicator extends PanelMenu.Button {
         this.menu.addMenuItem(buildFooterMenuItem(
             lastFetchedAt,
             () => this.refresh(),
-            this._extension ? () => this._extension.openPreferences() : null
+            this._extension ? () => this._extension.openPreferences() : null,
+            this._extensionPath
         ));
     }
 

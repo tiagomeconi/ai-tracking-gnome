@@ -1,42 +1,77 @@
 # AI Usage Monitor for GNOME
 
-Um indicador na barra superior do GNOME que mostra, de relance, o quanto
-das suas assinaturas de IA (Claude, ChatGPT/Codex, Gemini, GitHub Copilot)
-já foi consumido — sem precisar abrir cada app pra checar.
+<img src="extension/icons/logo.png" alt="AI Usage Monitor logo" width="120">
 
-> Monitora **consumo/cota**, nunca gastos em dinheiro.
+![GNOME Shell](https://img.shields.io/badge/GNOME%20Shell-45--48-4A86CF?logo=gnome&logoColor=white)
+![Platform](https://img.shields.io/badge/platform-Wayland%20%7C%20X11-4c7ba3)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Status](https://img.shields.io/badge/status-internal%20testing-dbab09)
 
-## Por que isso existe
+A GNOME Shell extension that shows, at a glance, how much of your AI
+subscriptions (Claude, ChatGPT/Codex, Gemini, GitHub Copilot) you've already
+used — one indicator in the top bar instead of checking each app.
 
-Se você usa mais de uma assinatura de IA no dia a dia, é fácil ser
-surpreendido por um limite batendo no meio de uma tarefa importante. Esta
-extensão junta tudo num só lugar: um clique na barra superior mostra
-quanto falta de cada uma, e quando renova.
+> Monitors **usage/quota**, never money spent.
 
-## O que já funciona
+## Why this exists
 
-| IA | Status | O que mostra |
+If you juggle more than one AI subscription day to day, it's easy to get
+blindsided by a limit hitting mid-task. This extension puts all of them in
+one place: a click on the top bar shows how much is left on each, and when
+it renews.
+
+## Features
+
+- **Top bar indicator** — shows the name and percentage of whichever
+  subscription is closest to its limit (not an average, so a nearly-maxed
+  one never hides behind the others).
+- **Popup with per-provider detail** — every configured AI gets its own
+  card: usage bars per window (e.g. 5-hour and weekly), reset countdown,
+  and a shortcut link straight to that provider's own usage/billing page.
+- **Real quota, not an estimate** — Claude and Codex show the actual
+  percentage from your account, reusing the login you already did in the
+  official CLI (see [Privacy & security](#privacy--security)).
+- **Preferences** — hide any provider you don't use from the indicator and
+  popup, individually.
+- **Manual + automatic refresh** — the popup opens instantly from cache
+  (no network call just to look), refreshes in the background, and never
+  lets one provider's failure hide the others.
+- **Fully local** — no accounts of its own, no telemetry, no external
+  server.
+
+## What's real vs. still in progress
+
+| AI | Status | What it shows |
 |---|---|---|
-| **Claude** (Claude Code) | ✅ Dado real | Percentual real das janelas de 5h e 7 dias, direto da sua conta. |
-| **Codex** (ChatGPT) | ✅ Dado real | Percentual real da janela de 5h e semanal do Codex CLI. |
-| **Antigravity** (Gemini) | 🚧 Em desenvolvimento | Dados de demonstração por enquanto — nenhuma fonte real de cota foi encontrada ainda. |
-| **GitHub Copilot** | 🚧 Em desenvolvimento | Dados de demonstração por enquanto — a API oficial existe, integração real ainda não foi feita. |
+| **Claude** (Claude Code) | ✅ Real data | Real percentage of the 5-hour and 7-day windows, straight from your account. |
+| **Codex** (ChatGPT) | ✅ Real data | Real percentage of Codex CLI's 5-hour and weekly windows. |
+| **Antigravity** (Gemini) | 🚧 In progress | Demo data for now — no real quota source found yet. |
+| **GitHub Copilot** | 🚧 In progress | Demo data for now — an official API exists, integration isn't wired up yet. |
 
-Claude e Codex funcionam reaproveitando o login que você já fez nos CLIs
-oficiais (`claude auth login` / `codex login`) — a extensão nunca pede
-senha, nunca acessa nada pela web, e nunca envia essa credencial pra
-nenhum lugar além da própria API oficial do provedor. Detalhes técnicos
-completos em [`docs/decisions/ADR-007-real-quota-via-cli-credentials.md`](./docs/decisions/ADR-007-real-quota-via-cli-credentials.md).
+## Screenshots
 
-## Requisitos
+| Top bar indicator | Popup |
+|---|---|
+| ![Top bar indicator showing the closest-to-limit provider and percentage](docs/screenshots/panel.png) | ![Popup open, showing a card per provider with usage bars](docs/screenshots/popup.png) |
 
-- GNOME Shell 45 a 48 (testado em Zorin OS 18 / GNOME Shell 46).
-- Para dado real de **Claude**: [Claude Code](https://claude.com/claude-code) instalado e logado.
-- Para dado real de **Codex**: [Codex CLI](https://developers.openai.com/codex/cli) instalado e logado.
-- Sem essas ferramentas, a extensão continua funcionando normalmente com
-  os cards correspondentes mostrando "autenticação necessária".
+### Preferences
 
-## Instalação
+<img src="docs/screenshots/preferences.png" alt="Preferences window with a toggle per provider" width="500">
+
+## Requirements
+
+- Linux with GNOME Shell 45–48 (tested on Zorin OS 18 / GNOME Shell 46).
+- For **Claude** real data: [Claude Code](https://claude.com/claude-code)
+  installed and logged in (`claude auth login`).
+- For **Codex** real data: [Codex CLI](https://developers.openai.com/codex/cli)
+  installed and logged in (`codex login`).
+- Without those, the extension still works fine — the corresponding card
+  just shows "authentication required" instead of a percentage.
+
+## Installation
+
+Not on extensions.gnome.org yet, so this is the only way to install it for
+now.
 
 ```bash
 git clone https://github.com/tiagomeconi/ai-tracking-gnome.git
@@ -44,52 +79,86 @@ cd ai-tracking-gnome
 ./scripts/install.sh
 ```
 
-Depois:
+Then log out/in (Wayland) or restart the Shell with <kbd>Alt</kbd>+<kbd>F2</kbd>,
+<kbd>r</kbd>, <kbd>Enter</kbd> (X11 only), and enable it:
 
-- **Wayland:** faça logout/login e habilite com `gnome-extensions enable
-  ai-usage-monitor@prohound.io`.
-- **X11:** aperte `Alt+F2`, digite `r`, `Enter` (recarrega a Shell sem
-  precisar logout), depois rode o comando de habilitar acima.
+```bash
+gnome-extensions enable ai-usage-monitor@prohound.io
+```
 
-Para desinstalar: `./scripts/uninstall.sh`.
+To remove it later: `./scripts/uninstall.sh`.
 
-## Preferências
+## Usage
 
-Clique no ícone de engrenagem no rodapé do popup pra abrir as
-preferências — dá pra ocultar qualquer uma das IAs do indicador e do
-popup individualmente.
+Click the indicator in the top bar to open the popup:
 
-## Privacidade e segurança
+- Each card shows the provider's name, usage bar(s), and when each window
+  resets.
+- The **↗** button next to a provider's name opens that provider's own
+  usage/billing page in your browser.
+- **↻** at the bottom refreshes on demand; the timestamp next to it shows
+  when data was last fetched.
+- **⚙** opens **Preferences**, where you can hide any provider you don't
+  want to see.
 
-- Código 100% aberto — audite à vontade.
-- Nenhuma telemetria, nenhum servidor próprio: a extensão só fala
-  diretamente com as APIs oficiais dos provedores (Anthropic, OpenAI).
-- Nenhuma credencial é armazenada, logada ou enviada a terceiros — o
-  token do Claude Code, por exemplo, é lido em memória só para montar uma
-  requisição, nunca gravado em outro lugar.
-- Nada de scraping de páginas web nem captura de cookies de sessão do
-  navegador — só reaproveita o login que os próprios CLIs oficiais já
-  fazem.
+## Troubleshooting
+
+- **Indicator doesn't show up after enabling** — GNOME Shell only reloads
+  extension code on a Shell restart. On Wayland, log out and back in; on
+  X11, <kbd>Alt</kbd>+<kbd>F2</kbd>, <kbd>r</kbd>, <kbd>Enter</kbd> restarts
+  the Shell in place.
+- **Claude/Codex show "authentication required"** — make sure you're
+  logged in on the CLI itself (`claude auth login` / `codex login`); the
+  extension reuses that session, it doesn't have its own login.
+- **A card shows a temporary error that clears up on its own** — usually a
+  provider's own rate limit from refreshing too often; it recovers
+  automatically.
+- **Something else looks wrong** — check the Shell's log for errors:
+
+  ```bash
+  journalctl --user -f -o cat /usr/bin/gnome-shell
+  ```
+
+## Privacy & security
+
+- Fully open source — audit it yourself.
+- No telemetry, no server of ours: the extension only talks directly to
+  the providers' own official APIs (Anthropic, OpenAI).
+- No credential is ever stored, logged, or sent anywhere else — the
+  Claude Code token, for example, is read into memory only to build one
+  request, never written anywhere.
+- No web scraping, no browser session cookies — it only reuses the login
+  the official CLIs already made for themselves.
 
 ## Feedback
 
-Este projeto está sendo testado internamente. Encontrou um bug, uma IA
-que você gostaria de ver suportada, ou tem sugestão de UI? Abra uma
+This project is in internal testing. Found a bug, want another AI
+supported, or have a UI suggestion? Open an
 [issue](https://github.com/tiagomeconi/ai-tracking-gnome/issues).
 
-## Para desenvolvedores
+## Development
 
-Estrutura do projeto, decisões de arquitetura (ADRs), pesquisa de cada
-provider e como rodar os testes estão em
-[`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md).
+The extension lives at `extension/`. Install it with the symlink method
+above (`scripts/install.sh`) — it lets the Shell load the code straight
+from your working copy.
 
-## Créditos
+Domain logic (`extension/lib/**`) has no GNOME Shell dependency, so its
+tests run under plain Node:
 
-A técnica de reaproveitar o login OAuth dos CLIs oficiais (Claude
-Code/Codex) para consultar a cota real foi verificada a partir do projeto
-open-source [tokidachi](https://github.com/Gaalbu/tokidachi) (MIT),
-de Gabriel Albuquerque.
+```bash
+npm test
+```
 
-## Licença
+Project structure, architecture decisions (ADRs), and the research behind
+each provider are in [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md).
 
-[MIT](./LICENSE)
+## Credits
+
+The technique of reusing the official CLIs' own OAuth login (Claude
+Code/Codex) to query real quota was verified against the open-source
+[tokidachi](https://github.com/Gaalbu/tokidachi) project (MIT), by Gabriel
+Albuquerque.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).

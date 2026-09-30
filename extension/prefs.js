@@ -8,6 +8,7 @@
 // carregamento inteiro do módulo de preferências.
 import Adw from 'gi://Adw?version=1';
 import Gtk from 'gi://Gtk?version=4.0';
+import GLib from 'gi://GLib';
 
 // O app de preferências ("Extensões") roda separado do processo principal
 // da Shell e usa um namespace de recurso diferente do de extension.js —
@@ -35,6 +36,29 @@ export default class AIUsageMonitorPreferences extends ExtensionPreferences {
             icon_name: 'view-list-symbolic',
         });
         window.add(page);
+
+        const headerGroup = new Adw.PreferencesGroup();
+        const header = new Gtk.Box({
+            orientation: Gtk.Orientation.HORIZONTAL,
+            spacing: 12,
+            halign: Gtk.Align.CENTER,
+            margin_top: 6,
+            margin_bottom: 6,
+        });
+
+        const logoPath = GLib.build_filenamev([this.path, 'icons', 'logo.png']);
+        if (GLib.file_test(logoPath, GLib.FileTest.EXISTS)) {
+            const logo = Gtk.Image.new_from_file(logoPath);
+            logo.pixel_size = 48;
+            header.append(logo);
+        }
+
+        header.append(new Gtk.Label({
+            label: '<span size="large" weight="bold">AI Usage Monitor</span>',
+            use_markup: true,
+        }));
+        headerGroup.add(header);
+        page.add(headerGroup);
 
         const group = new Adw.PreferencesGroup({
             title: 'Providers visíveis',
