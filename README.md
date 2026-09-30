@@ -125,7 +125,8 @@ tests/               testes de domínio, rodados com `node --test`
   (JSONL e SQLite, respectivamente) e estimam tokens processados numa
   janela de 5h. **Não é a cota da assinatura** — só atividade local, sem
   `limit`/`percent`. Validar em runtime real.
-- Gemini segue em Mock — pendente investigar o Antigravity CLI do usuário
-  (`~/.gemini/antigravity-cli`, `~/.cache/antigravity`).
+- Gemini segue em Mock — Antigravity CLI investigado (banco de conversas +
+  arquivo de estado), sem nenhum campo de token/cota encontrado. Ver
+  adendo em `docs/providers/gemini.md`. Continua `UNAVAILABLE`.
 - Fase 6 (GitHub Copilot, único `OFFICIAL_API`): adiado a pedido do
   usuário.

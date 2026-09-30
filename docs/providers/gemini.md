@@ -62,6 +62,26 @@ Status: Não há API, CLI ou client oficial do Google que exponha
   Gemini App.
 ```
 
+## Adendo — investigação do Antigravity CLI (2026-09-29)
+
+O usuário tem o Antigravity CLI instalado (`~/.gemini/antigravity-cli`).
+Investigação não-invasiva (schema/grep, sem ler conteúdo de conversas) dos
+arquivos locais encontrados:
+
+- `conversation_summaries.db` (SQLite) → tabela `conversation_summaries`
+  com metadados de conversa (título, preview, `step_count`, timestamps,
+  status) e um campo `raw_summary blob` opaco (provavelmente protobuf
+  serializado). **Nenhuma coluna de tokens/cota/limite.**
+- `jetski_state.pbtxt` e `settings.json` → busca por palavras-chave
+  (`token`, `usage`, `quota`, `budget`, `limit`, `credit`) só encontrou
+  `POST_ONBOARDING_STEP_TYPE_USAGE_MODE`, um nome de etapa do fluxo de
+  onboarding, sem relação com consumo/cota real.
+
+**Conclusão: nenhuma fonte local viável encontrada para o Antigravity
+CLI.** Classificação permanece `UNAVAILABLE`. Não implementado — ler o
+blob `raw_summary` sem um schema .proto conhecido seria inventar um
+formato, proibido pela seção 2.1/regra 5 do plano.
+
 ## Resposta à pergunta obrigatória (seção 7.1)
 
 Nenhuma das fontes encontradas informa o consumo da assinatura/produto que
