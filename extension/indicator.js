@@ -52,8 +52,8 @@ class AIUsageIndicator extends PanelMenu.Button {
         this._manager = new ProviderManager([
             new ClaudeSubscriptionProvider(),
             new CodexSubscriptionProvider(),
-            new MockProvider('gemini', 'Gemini', MockProvider.SCENARIOS.MULTI_WINDOW, 4000, 'https://gemini.google.com/'),
-            new MockProvider('copilot', 'Copilot', MockProvider.SCENARIOS.USAGE_20, 4000, 'https://github.com/settings/billing'),
+            new MockProvider('gemini', 'Antigravity (em desenvolvimento)', MockProvider.SCENARIOS.MULTI_WINDOW, 4000, 'https://gemini.google.com/'),
+            new MockProvider('copilot', 'Copilot (em desenvolvimento)', MockProvider.SCENARIOS.USAGE_20, 4000, 'https://github.com/settings/billing'),
         ]);
 
         const box = new St.BoxLayout({ style_class: 'ai-usage-panel-box' });

@@ -22,8 +22,8 @@ import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/
 const PROVIDERS = [
     { id: 'claude', name: 'Claude' },
     { id: 'codex', name: 'Codex (ChatGPT)' },
-    { id: 'gemini', name: 'Gemini' },
-    { id: 'copilot', name: 'Copilot' },
+    { id: 'gemini', name: 'Antigravity', dev: true },
+    { id: 'copilot', name: 'Copilot', dev: true },
 ];
 
 export default class AIUsageMonitorPreferences extends ExtensionPreferences {
@@ -45,7 +45,10 @@ export default class AIUsageMonitorPreferences extends ExtensionPreferences {
         const disabled = new Set(settings.get_strv('disabled-providers'));
 
         for (const provider of PROVIDERS) {
-            const row = new Adw.ActionRow({ title: provider.name });
+            const row = new Adw.ActionRow({
+                title: provider.name,
+                subtitle: provider.dev ? 'Em desenvolvimento — ainda usa dados de demonstração' : null,
+            });
 
             const toggle = new Gtk.Switch({
                 active: !disabled.has(provider.id),
