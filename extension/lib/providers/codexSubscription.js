@@ -84,10 +84,16 @@ export class CodexSubscriptionProvider extends UsageProvider {
             { method: 'account/rateLimits/read', id: 2, params: {} },
         ];
 
+        // Não fechar o stdin aqui: `account/rateLimits/read` é assíncrono
+        // (faz uma chamada de rede internamente) e o app-server encerra o
+        // processo assim que o stdin recebe EOF, mesmo com um pedido ainda
+        // pendente — fechar cedo demais mata a resposta antes dela chegar
+        // (confirmado testando manualmente no sistema real do usuário).
+        // O processo é finalizado depois em `_stop()`, já com a resposta
+        // em mãos.
         const payload = requests.map((r) => JSON.stringify(r)).join('\n') + '\n';
         const stdin = proc.get_stdin_pipe();
         stdin.write_bytes(GLib.Bytes.new(new TextEncoder().encode(payload)), null);
-        stdin.close(null);
     }
 
     async _readResult(proc) {
