@@ -19,6 +19,9 @@ adiada (ADR-002): o MVP roda tudo no processo da extensão. Passada de
 UI/UX (seção 10) aplicada: estado nunca só por cor, mensagens de erro
 acionáveis, nomes acessíveis e foco visível no botão de refresh.
 
+**Claude já usa dado real** (EXPERIMENTAL, ADR-005) — os demais seguem com
+`MockProvider`.
+
 ### Resultado da pesquisa de providers (seção 7 do plano)
 
 | Provider | Classificação | Observação |
@@ -94,8 +97,10 @@ extension/          extensão GNOME Shell (GNOME 45+, ver ADR-001)
 │   ├── secrets.js         SecretStore (Secret Service/GNOME Keyring)
 │   ├── providerManager.js orquestra providers, isola falhas, aplica retry
 │   └── providers/
-│       ├── provider.js    contrato UsageProvider
-│       └── mock.js        MockProvider (todos os cenários da seção 6.1)
+│       ├── provider.js               contrato UsageProvider
+│       ├── mock.js                   MockProvider (cenários da seção 6.1)
+│       ├── claudeCodeLocal.js        provider real EXPERIMENTAL (ADR-005)
+│       └── claudeCodeLocalAggregate.js  parsing/agregação puros (testados)
 └── stylesheet.css
 
 docs/
@@ -112,9 +117,14 @@ tests/               testes de domínio, rodados com `node --test`
   dispara tempestade de requests, falha de provider isolada).
 - Validar `SecretStore`/`LibsecretBackend` contra um Secret Service real
   (GNOME Keyring rodando de verdade), fora deste sandbox.
-- Fase 6 (primeiro provider real): implementar o adapter do GitHub Copilot
-  (`OFFICIAL_API`, ver `docs/providers/copilot.md`), usando `SecretStore`
-  para o PAT do usuário.
-- ChatGPT, Claude e Gemini ficam `UNAVAILABLE` até que os respectivos
-  fornecedores publiquem uma API oficial de cota de assinatura — não
-  implementar via scraping/cookies de sessão (proibido pela seção 2.1).
+- Claude agora usa um provider real **EXPERIMENTAL**
+  (`ClaudeCodeLocalProvider`, ADR-005): lê localmente os transcripts JSONL
+  do Claude Code (`~/.claude/projects/**/*.jsonl`) e estima tokens
+  processados numa janela de 5h. **Não é a cota da assinatura** — só
+  atividade local, sem `limit`/`percent`. Validar em runtime real.
+- ChatGPT e Gemini seguem em Mock — nenhuma fonte local verificável foi
+  encontrada para eles neste ambiente (ver adendo em
+  `docs/providers/{chatgpt,gemini}.md`); implementar exigiria inventar um
+  formato sem evidência, proibido pela seção 2.1.
+- Fase 6 (GitHub Copilot, único `OFFICIAL_API`): adiado a pedido do
+  usuário.

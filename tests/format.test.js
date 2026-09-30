@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { formatRemaining, formatElapsed, mostRecentFetchedAt } from '../extension/lib/format.js';
+import { formatRemaining, formatElapsed, mostRecentFetchedAt, formatUsedWithUnit } from '../extension/lib/format.js';
 
 const now = new Date('2026-01-01T00:00:00Z');
 
@@ -63,6 +63,18 @@ test('mostRecentFetchedAt ignora datas inválidas', () => {
         { fetchedAt: '2026-01-01T00:00:00Z' },
     ]);
     assert.equal(result, '2026-01-01T00:00:00.000Z');
+});
+
+test('formatUsedWithUnit retorna null sem used numérico', () => {
+    assert.equal(formatUsedWithUnit(undefined, 'tokens'), null);
+});
+
+test('formatUsedWithUnit formata com separador de milhar e rótulo pt-BR', () => {
+    assert.equal(formatUsedWithUnit(38204, 'tokens'), '38.204 tokens');
+});
+
+test('formatUsedWithUnit cai para a própria unidade quando desconhecida', () => {
+    assert.equal(formatUsedWithUnit(5, 'widgets'), '5 widgets');
 });
 
 test('mostRecentFetchedAt escolhe o timestamp mais recente', () => {

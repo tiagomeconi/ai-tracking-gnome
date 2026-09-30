@@ -12,6 +12,7 @@ import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import { ProviderManager } from './lib/providerManager.js';
 import { UsageCache } from './lib/cache.js';
 import { MockProvider } from './lib/providers/mock.js';
+import { ClaudeCodeLocalProvider } from './lib/providers/claudeCodeLocal.js';
 import { mostRecentFetchedAt } from './lib/format.js';
 import {
     buildProviderMenuItem,
@@ -27,11 +28,14 @@ class AIUsageIndicator extends PanelMenu.Button {
     _init() {
         super._init(0.0, 'AI Usage Monitor', false);
 
-        // Fase 1/2: apenas MockProvider. Providers reais entram na Fase 6+
-        // seguindo a pesquisa registrada em docs/providers/.
+        // ChatGPT/Gemini/Copilot seguem em Mock: nenhuma fonte local
+        // verificável foi encontrada para ChatGPT/Gemini (docs/providers/),
+        // e o Copilot (único OFFICIAL_API) foi adiado a pedido do usuário.
+        // Claude usa dado real, mas EXPERIMENTAL — ver
+        // lib/providers/claudeCodeLocal.js e docs/providers/claude.md.
         this._cache = new UsageCache();
         this._manager = new ProviderManager([
-            new MockProvider('claude', 'Claude', MockProvider.SCENARIOS.RESET_SOON),
+            new ClaudeCodeLocalProvider(),
             new MockProvider('chatgpt', 'ChatGPT', MockProvider.SCENARIOS.USAGE_75),
             new MockProvider('gemini', 'Gemini', MockProvider.SCENARIOS.MULTI_WINDOW),
             new MockProvider('copilot', 'Copilot', MockProvider.SCENARIOS.USAGE_20),

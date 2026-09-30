@@ -62,6 +62,18 @@ Status: Não há fonte oficial documentada, autenticável de forma suportada e
   Reavaliar se a Anthropic publicar uma API oficial no futuro.
 ```
 
+## Adendo — implementação EXPERIMENTAL (2026-09-29, ADR-005)
+
+A pesquisa acima permanece válida: **não existe API oficial para a cota da
+assinatura**. Ainda assim, foi implementado um provider `EXPERIMENTAL`
+(`extension/lib/providers/claudeCodeLocal.js`) que lê localmente os
+transcripts JSONL que o próprio Claude Code grava em
+`~/.claude/projects/**/*.jsonl` (confirmado por inspeção direta destes
+arquivos neste ambiente) e soma tokens processados numa janela de 5h. Isto
+**não é a cota da assinatura** — é só volume de atividade local do Claude
+Code, sem `limit`/`percent` (nunca fabricados). Ver ADR-005 para detalhes,
+riscos e limitações completas.
+
 ## Resposta à pergunta obrigatória (seção 7.1)
 
 A única API oficialmente documentada ("Usage & Cost Admin API") informa

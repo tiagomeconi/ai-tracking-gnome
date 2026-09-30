@@ -9,7 +9,7 @@ import Atk from 'gi://Atk';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import { computePercent, visualStateFromPercent } from './lib/normalizer.js';
-import { formatRemaining, formatElapsed } from './lib/format.js';
+import { formatRemaining, formatElapsed, formatUsedWithUnit } from './lib/format.js';
 
 const STATE_STYLE_CLASS = {
     normal: 'ai-usage-bar-fill-normal',
@@ -56,6 +56,13 @@ export function buildProviderMenuItem(usage) {
     const nameLabel = new St.Label({ text: usage.providerName, style_class: 'ai-usage-provider-name' });
     header.add_child(nameLabel);
     box.add_child(header);
+
+    if (usage.accountLabel) {
+        box.add_child(new St.Label({
+            text: usage.accountLabel,
+            style_class: 'ai-usage-provider-account-label',
+        }));
+    }
 
     if (['unavailable', 'auth_required', 'error'].includes(usage.status)) {
         const message = STATUS_LABEL[usage.status] ?? usage.status;
@@ -112,8 +119,14 @@ function buildWindowRow(window) {
 
     // O estado (Normal/Atenção/Alto/Crítico) sempre acompanha o percentual
     // em texto — a cor da barra nunca é a única forma de comunicá-lo
-    // (RF-03, seção 10.4).
-    const percentText = typeof percent === 'number' ? `${Math.round(percent)}% · ${stateLabel}` : stateLabel;
+    // (RF-03, seção 10.4). Quando não há percentual (ex.: providers sem
+    // limit conhecido), mostra o valor bruto em vez de só "Desconhecido".
+    const usedText = formatUsedWithUnit(window.used, window.unit);
+    const percentText = typeof percent === 'number'
+        ? `${Math.round(percent)}% · ${stateLabel}`
+        : usedText
+            ? `${usedText} · ${stateLabel}`
+            : stateLabel;
     const label = new St.Label({
         text: `${window.label} — ${percentText}`,
         style_class: 'ai-usage-window-label',

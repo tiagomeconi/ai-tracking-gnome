@@ -44,6 +44,23 @@ export function formatElapsed(fetchedAt, now = new Date()) {
     return `há ${days} dia${days > 1 ? 's' : ''}`;
 }
 
+const UNIT_LABEL_PT = {
+    messages: 'mensagens',
+    tokens: 'tokens',
+    requests: 'requests',
+    credits: 'créditos',
+    percentage: '%',
+    unknown: 'unidades',
+};
+
+/** Formata um número com separador de milhar (pt-BR) e o rótulo da unidade. */
+export function formatUsedWithUnit(used, unit) {
+    if (typeof used !== 'number')
+        return null;
+    const label = UNIT_LABEL_PT[unit] ?? unit ?? 'unidades';
+    return `${used.toLocaleString('pt-BR')} ${label}`;
+}
+
 /** fetchedAt mais recente entre uma lista de AIProviderUsage, ou null. */
 export function mostRecentFetchedAt(usages) {
     const timestamps = usages
