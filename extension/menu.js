@@ -106,7 +106,7 @@ export function buildProviderMenuItem(usage, extensionPath = null) {
     });
 
     const header = new St.BoxLayout({ x_expand: true, style_class: 'ai-usage-provider-header' });
-    header.add_child(buildProviderIcon(usage.providerId, extensionPath));
+    header.add_child(buildProviderIcon(usage.providerId, extensionPath, 28));
 
     const nameLabel = new St.Label({
         text: usage.providerName,

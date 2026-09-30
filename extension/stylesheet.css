@@ -5,6 +5,7 @@
 .ai-usage-provider-row {
     padding: 6px 12px;
     spacing: 2px;
+    min-width: 340px;
 }
 
 .ai-usage-provider-header {
