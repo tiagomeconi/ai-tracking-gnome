@@ -22,6 +22,23 @@ import Gio from 'gi://Gio';
 import { UsageProvider } from './provider.js';
 import { aggregateUsage } from './claudeCodeLocalAggregate.js';
 
+// `enumerate_children_async`/`next_files_async` não estão na lista de
+// auto-promisify de todas as versões do GJS — promisificar explicitamente
+// evita "At least N arguments required" em runtime. Guardado com try/catch
+// porque `Gio._promisify` lança se chamado duas vezes no mesmo método (o
+// módulo pode ser reavaliado entre enable/disable da extensão).
+for (const [proto, asyncName, finishName] of [
+    [Gio.File.prototype, 'enumerate_children_async', 'enumerate_children_finish'],
+    [Gio.FileEnumerator.prototype, 'next_files_async', 'next_files_finish'],
+    [Gio.File.prototype, 'load_contents_async', 'load_contents_finish'],
+]) {
+    try {
+        Gio._promisify(proto, asyncName, finishName);
+    } catch {
+        // já promisificado nesta versão/carregamento do GJS — ok ignorar.
+    }
+}
+
 const WINDOW_MS = 5 * 60 * 60 * 1000; // janela rolling de ~5h mencionada na ficha de pesquisa
 const MAX_DEPTH = 4; // ~/.claude/projects/<projeto>/<sessão>/subagents/*.jsonl
 

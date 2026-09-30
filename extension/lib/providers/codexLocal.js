@@ -23,6 +23,14 @@ import Gio from 'gi://Gio';
 import { UsageProvider } from './provider.js';
 import { aggregateThreadTokens } from './codexLocalAggregate.js';
 
+// `communicate_utf8_async` não está na lista de auto-promisify de todas as
+// versões do GJS — ver mesmo comentário em claudeCodeLocal.js.
+try {
+    Gio._promisify(Gio.Subprocess.prototype, 'communicate_utf8_async', 'communicate_utf8_finish');
+} catch {
+    // já promisificado nesta versão/carregamento do GJS — ok ignorar.
+}
+
 const WINDOW_MS = 5 * 60 * 60 * 1000; // mesma janela de 5h reportada por `codex /status`
 const QUERY = 'SELECT tokens_used, updated_at_ms FROM threads WHERE archived = 0;';
 
