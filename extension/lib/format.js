@@ -61,6 +61,15 @@ export function formatUsedWithUnit(used, unit) {
     return `${used.toLocaleString('pt-BR')} ${label}`;
 }
 
+/**
+ * Nome curto do provider para o indicador da barra superior — remove
+ * sufixos entre parênteses (ex.: "Antigravity (em desenvolvimento)" vira
+ * "Antigravity") para não estourar o espaço da barra.
+ */
+export function shortProviderName(providerName) {
+    return providerName.replace(/\s*\([^)]*\)\s*$/, '').trim();
+}
+
 /** fetchedAt mais recente entre uma lista de AIProviderUsage, ou null. */
 export function mostRecentFetchedAt(usages) {
     const timestamps = usages

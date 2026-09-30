@@ -14,7 +14,7 @@ import { UsageCache } from './lib/cache.js';
 import { MockProvider } from './lib/providers/mock.js';
 import { ClaudeSubscriptionProvider } from './lib/providers/claudeSubscription.js';
 import { CodexSubscriptionProvider } from './lib/providers/codexSubscription.js';
-import { mostRecentFetchedAt } from './lib/format.js';
+import { mostRecentFetchedAt, shortProviderName } from './lib/format.js';
 import {
     buildProviderMenuItem,
     buildLoadingMenuItem,
@@ -61,7 +61,7 @@ class AIUsageIndicator extends PanelMenu.Button {
         box.add_child(buildProviderIcon('logo', this._extensionPath, 16));
 
         this._label = new St.Label({
-            text: 'AI …',
+            text: '…',
             y_align: Clutter.ActorAlign.CENTER,
         });
         box.add_child(this._label);
@@ -137,12 +137,14 @@ class AIUsageIndicator extends PanelMenu.Button {
         if (usages.length === 0) {
             this.menu.removeAll();
             this.menu.addMenuItem(buildEmptyMenuItem());
-            this._label.set_text('AI —');
+            this._label.set_text('—');
             return;
         }
 
         const best = this._manager.getMostCritical(usages);
-        this._label.set_text(best ? `AI ${Math.round(best.percent)}%` : 'AI —');
+        this._label.set_text(best
+            ? `${shortProviderName(best.provider.providerName)} ${Math.round(best.percent)}%`
+            : '—');
 
         this.menu.removeAll();
         for (const usage of usages)

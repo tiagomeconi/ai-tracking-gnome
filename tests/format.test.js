@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { formatRemaining, formatElapsed, mostRecentFetchedAt, formatUsedWithUnit } from '../extension/lib/format.js';
+import { formatRemaining, formatElapsed, mostRecentFetchedAt, formatUsedWithUnit, shortProviderName } from '../extension/lib/format.js';
 
 const now = new Date('2026-01-01T00:00:00Z');
 
@@ -51,6 +51,18 @@ test('formatElapsed formata horas', () => {
 
 test('formatElapsed formata dias', () => {
     assert.equal(formatElapsed('2025-12-30T00:00:00Z', now), 'há 2 dias');
+});
+
+test('shortProviderName remove sufixo entre parênteses', () => {
+    assert.equal(shortProviderName('Antigravity (em desenvolvimento)'), 'Antigravity');
+});
+
+test('shortProviderName não altera nomes sem parênteses', () => {
+    assert.equal(shortProviderName('Claude'), 'Claude');
+});
+
+test('shortProviderName remove apenas o sufixo, não parênteses no meio', () => {
+    assert.equal(shortProviderName('Codex (ChatGPT)'), 'Codex');
 });
 
 test('mostRecentFetchedAt retorna null para lista vazia', () => {
