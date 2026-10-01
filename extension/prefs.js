@@ -23,7 +23,7 @@ import { ExtensionPreferences } from 'resource:///org/gnome/Shell/Extensions/js/
 const PROVIDERS = [
     { id: 'claude', name: 'Claude' },
     { id: 'codex', name: 'Codex (ChatGPT)' },
-    { id: 'gemini', name: 'Antigravity', dev: true },
+    { id: 'gemini', name: 'Antigravity' },
     { id: 'copilot', name: 'Copilot', dev: true },
 ];
 

@@ -21,6 +21,15 @@ const STATE_STYLE_CLASS = {
     unknown: 'ai-usage-bar-fill-unknown',
 };
 
+// Providers com muitas janelas (ex.: Antigravity expõe uma por modelo,
+// facilmente 15-20) viram um dropdown recolhido por padrão em vez de
+// inflar o popup inteiro — sem isso, o popup fica mais alto que a tela e
+// empurra o rodapé (botão de atualizar/preferências) pra fora da área
+// visível. Um St.ScrollView customizado foi tentado como alternativa e
+// causou bugs reais (ver indicator.js); o dropdown é a solução mais
+// simples que resolve o problema de fato (altura do popup).
+const COLLAPSE_WINDOWS_THRESHOLD = 4;
+
 // RF-03: o estado nunca pode ser comunicado só pela cor da barra — todo
 // estado tem uma palavra equivalente, usada no texto e no accessible_name.
 const STATE_LABEL = {
@@ -90,10 +99,15 @@ function buildManageLinkButton(manageUrl, providerName) {
 }
 
 /**
- * Cria um PopupMenu.PopupBaseMenuItem representando um provider.
+ * Cria os PopupMenu items representando um provider. Normalmente é um
+ * único item; providers com mais janelas do que
+ * `COLLAPSE_WINDOWS_THRESHOLD` (ex.: Antigravity, uma por modelo) geram um
+ * segundo item — um dropdown recolhido (`PopupSubMenuMenuItem`) — pra o
+ * popup nunca ficar mais alto que a tela.
  * @param {import('./lib/types.js').AIProviderUsage} usage
  * @param {string|null} [extensionPath] - `Extension.path`, usado para
  *   resolver o ícone do provider.
+ * @returns {import('resource:///org/gnome/shell/ui/popupMenu.js').PopupBaseMenuItem[]}
  */
 export function buildProviderMenuItem(usage, extensionPath = null) {
     const item = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
@@ -132,7 +146,7 @@ export function buildProviderMenuItem(usage, extensionPath = null) {
         const message = STATUS_LABEL[usage.status] ?? usage.status;
         box.add_child(new St.Label({ text: message, style_class: 'ai-usage-provider-status' }));
         item.add_child(box);
-        return item;
+        return [item];
     }
 
     if (!usage.windows || usage.windows.length === 0) {
@@ -141,7 +155,12 @@ export function buildProviderMenuItem(usage, extensionPath = null) {
             style_class: 'ai-usage-provider-status',
         }));
         item.add_child(box);
-        return item;
+        return [item];
+    }
+
+    if (usage.windows.length > COLLAPSE_WINDOWS_THRESHOLD) {
+        item.add_child(box);
+        return [item, buildWindowsDropdown(usage.windows, usage.stale)];
     }
 
     for (const window of usage.windows)
@@ -155,7 +174,33 @@ export function buildProviderMenuItem(usage, extensionPath = null) {
     }
 
     item.add_child(box);
-    return item;
+    return [item];
+}
+
+/**
+ * Dropdown recolhido (fechado por padrão) com uma linha por janela —
+ * usado quando um provider tem mais janelas do que
+ * `COLLAPSE_WINDOWS_THRESHOLD`.
+ */
+function buildWindowsDropdown(windows, stale) {
+    const submenuItem = new PopupMenu.PopupSubMenuMenuItem(`Ver ${windows.length} janelas de uso`);
+
+    for (const window of windows) {
+        const rowItem = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
+        rowItem.add_child(buildWindowRow(window));
+        submenuItem.menu.addMenuItem(rowItem);
+    }
+
+    if (stale) {
+        const staleItem = new PopupMenu.PopupBaseMenuItem({ reactive: false, can_focus: false });
+        staleItem.add_child(new St.Label({
+            text: 'Último dado conhecido (desatualizado)',
+            style_class: 'ai-usage-provider-stale',
+        }));
+        submenuItem.menu.addMenuItem(staleItem);
+    }
+
+    return submenuItem;
 }
 
 function buildWindowRow(window) {
@@ -237,7 +282,7 @@ export function buildFooterMenuItem(lastFetchedAt, onRefresh, onOpenPreferences 
 
     const box = new St.BoxLayout({ x_expand: true, style_class: 'ai-usage-footer' });
 
-    box.add_child(buildProviderIcon('logo', extensionPath, 32));
+    box.add_child(buildProviderIcon('logo', extensionPath, 48));
 
     const label = new St.Label({
         text: formatElapsed(lastFetchedAt),

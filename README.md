@@ -45,7 +45,7 @@ it renews.
 |---|---|---|
 | **Claude** (Claude Code) | ✅ Real data | Real percentage of the 5-hour and 7-day windows, straight from your account. |
 | **Codex** (ChatGPT) | ✅ Real data | Real percentage of Codex CLI's 5-hour and weekly windows. |
-| **Antigravity** (Gemini) | 🚧 In progress | Demo data for now — no real quota source found yet. |
+| **Antigravity** (Gemini) | ✅ Real data | Real per-model quota from the official Antigravity CLI (`agy`), reusing its own login — doesn't cover the Gemini web app's usage counter, which has no public API. |
 | **GitHub Copilot** | 🚧 In progress | Demo data for now — an official API exists, integration isn't wired up yet. |
 
 ## Screenshots

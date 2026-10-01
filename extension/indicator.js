@@ -14,6 +14,7 @@ import { UsageCache } from './lib/cache.js';
 import { MockProvider } from './lib/providers/mock.js';
 import { ClaudeSubscriptionProvider } from './lib/providers/claudeSubscription.js';
 import { CodexSubscriptionProvider } from './lib/providers/codexSubscription.js';
+import { AntigravitySubscriptionProvider } from './lib/providers/antigravitySubscription.js';
 import { mostRecentFetchedAt, shortProviderName } from './lib/format.js';
 import {
     buildProviderMenuItem,
@@ -41,18 +42,18 @@ class AIUsageIndicator extends PanelMenu.Button {
             this._renderFromCache();
         }) ?? null;
 
-        // Claude e Codex usam a cota REAL da assinatura, reaproveitando o
-        // login OAuth que os próprios CLIs oficiais já gravam — EXPERIMENTAL
+        // Claude, Codex e Antigravity usam a cota REAL da assinatura,
+        // reaproveitando o login OAuth que os próprios CLIs oficiais já
+        // gravam (arquivo de credenciais ou Secret Service) — EXPERIMENTAL
         // (endpoint/protocolo não documentados publicamente), ver
-        // lib/providers/{claudeSubscription,codexSubscription}.js e
-        // docs/providers/ + ADR-007. Gemini segue em Mock (Antigravity CLI
-        // investigado, sem fonte viável). Copilot (único OFFICIAL_API) foi
-        // adiado a pedido do usuário.
+        // lib/providers/{claudeSubscription,codexSubscription,
+        // antigravitySubscription}.js e docs/providers/ + ADR-007. Copilot
+        // (único OFFICIAL_API) foi adiado a pedido do usuário.
         this._cache = new UsageCache();
         this._manager = new ProviderManager([
             new ClaudeSubscriptionProvider(),
             new CodexSubscriptionProvider(),
-            new MockProvider('gemini', 'Antigravity (em desenvolvimento)', MockProvider.SCENARIOS.MULTI_WINDOW, 4000, 'https://gemini.google.com/'),
+            new AntigravitySubscriptionProvider(),
             new MockProvider('copilot', 'Copilot (em desenvolvimento)', MockProvider.SCENARIOS.USAGE_20, 4000, 'https://github.com/settings/billing'),
         ]);
 
@@ -68,6 +69,13 @@ class AIUsageIndicator extends PanelMenu.Button {
 
         this.add_child(box);
 
+        // Um St.ScrollView customizado em volta da lista foi tentado (pra
+        // listas grandes, ex.: Antigravity com 15-20 janelas), mas causou
+        // três bugs reais num GNOME Shell real (seta de atalho cortada,
+        // trava de scroll combinado com dropdown, botão de atualizar do
+        // rodapé parando de responder a clique) sem solução confiável —
+        // removido. Sem ele, um popup com muitas janelas pode crescer além
+        // da tela (sem rolar), mas todo o resto funciona.
         this._buildEmptyMenu();
         this._refreshTimeoutId = null;
         this._refreshPromise = null;
@@ -134,8 +142,9 @@ class AIUsageIndicator extends PanelMenu.Button {
         const enabledIds = this._enabledProviderIds();
         const usages = this._cache.getAll().filter((u) => enabledIds.has(u.providerId));
 
+        this.menu.removeAll();
+
         if (usages.length === 0) {
-            this.menu.removeAll();
             this.menu.addMenuItem(buildEmptyMenuItem());
             this._label.set_text('—');
             return;
@@ -146,9 +155,10 @@ class AIUsageIndicator extends PanelMenu.Button {
             ? `${shortProviderName(best.provider.providerName)} ${Math.round(best.percent)}%`
             : '—');
 
-        this.menu.removeAll();
-        for (const usage of usages)
-            this.menu.addMenuItem(buildProviderMenuItem(usage, this._extensionPath));
+        for (const usage of usages) {
+            for (const item of buildProviderMenuItem(usage, this._extensionPath))
+                this.menu.addMenuItem(item);
+        }
 
         this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         const lastFetchedAt = mostRecentFetchedAt(usages);

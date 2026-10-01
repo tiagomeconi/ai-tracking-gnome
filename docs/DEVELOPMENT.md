@@ -15,10 +15,10 @@ Fases 1 (skeleton da extensão), 2 (modelo de domínio + MockProvider), 3
 ver `docs/providers/`. A Fase 4 (serviço/IPC separado) foi conscientemente
 adiada (ADR-002): tudo roda no processo da extensão.
 
-Claude e Codex usam a cota **real** da assinatura (EXPERIMENTAL, ADR-007 —
-reaproveita o login OAuth que os próprios CLIs oficiais já gravam).
-Antigravity (Gemini) e GitHub Copilot seguem com `MockProvider`, marcados
-"(em desenvolvimento)" na UI.
+Claude, Codex e Antigravity usam a cota **real** da assinatura
+(EXPERIMENTAL, ADR-007/ADR-008 — reaproveita o login OAuth que os próprios
+CLIs oficiais já gravam, seja em arquivo ou no Secret Service). GitHub
+Copilot segue com `MockProvider`, marcado "(em desenvolvimento)" na UI.
 
 ### Resultado da pesquisa de providers (seção 7 do plano)
 
@@ -27,7 +27,7 @@ Antigravity (Gemini) e GitHub Copilot seguem com `MockProvider`, marcados
 | ChatGPT / OpenAI (chat geral) | `UNAVAILABLE` | Sem API oficial para cota da assinatura de consumidor. |
 | Claude / Anthropic (assinatura) | `UNAVAILABLE`, mas implementado via ADR-007 | API oficial de billing é só para a API de devs; usamos o endpoint interno que o próprio Claude Code chama para `/usage`. |
 | Codex CLI | `UNAVAILABLE`, mas implementado via ADR-007 | Sem API pública; usamos `codex app-server --stdio` (JSON-RPC), a mesma interface que o próprio CLI usa. |
-| Gemini / Antigravity | `UNAVAILABLE` | Nenhuma fonte local ou API viável encontrada (ver adendo em `docs/providers/gemini.md`). |
+| Antigravity CLI (Gemini) | `UNAVAILABLE`, mas implementado via ADR-008 | Sem API pública; lemos o token OAuth que o próprio `agy` grava no Secret Service e chamamos o mesmo backend interno (`cloudcode-pa.googleapis.com`) que o `/usage` do CLI usa. Não cobre o contador do Gemini App web (gemini.google.com), que continua `UNAVAILABLE` sem exceção (ver `docs/providers/gemini.md`). |
 | GitHub Copilot | `OFFICIAL_API` | Único com API oficial de billing/usage, ainda não implementado (adiado). |
 
 Fichas completas (fonte, autenticação, riscos, docs oficiais) em
@@ -145,8 +145,26 @@ tests/               testes de domínio, rodados com `node --test`
 ## Próximos passos (ver seção 12/16 do plano)
 
 - Suporte a GitHub Copilot real (único `OFFICIAL_API`), atualmente adiado.
-- Investigar uma fonte real para Antigravity/Gemini (nada encontrado até
-  agora — ver adendo em `docs/providers/gemini.md`).
+- `AntigravitySubscriptionProvider` já foi validado de ponta a ponta num
+  GNOME Shell real (ADR-008, adendo de validação): achou e corrigiu um
+  erro real de nome de método GJS (`password_lookupv` → `password_lookup`,
+  também corrigido em `lib/secrets.js`) e confirmou dado real vindo da
+  Cloud Code API.
+- Um `St.ScrollView` customizado em volta da lista do popup foi tentado
+  (providers como Antigravity podem ter 15-20+ janelas, uma por modelo,
+  que sem conter isso estouram a tela) e causou bugs reais em sequência
+  num GNOME Shell real (seta de atalho cortada pela barra de rolagem,
+  trava ao combinar com um dropdown recolhido). Removido o scrollview
+  por completo, o problema real ficou claro: sem *nenhum* limite de
+  altura, o rodapé (botão de atualizar/preferências) saía fisicamente da
+  tela em listas grandes — não era o scrollview capturando o clique
+  errado, era o botão nem estar mais na área visível. A solução final foi
+  reintroduzir só o dropdown recolhido (`PopupSubMenuMenuItem`, sem
+  scrollview nenhum): providers com mais de 4 janelas (`menu.js`,
+  `COLLAPSE_WINDOWS_THRESHOLD`) mostram um resumo clicável em vez de todas
+  as linhas, o que mantém o popup sempre curto o bastante pra caber na
+  tela. Ainda não confirmado pelo usuário nesta versão final (sem
+  scrollview) num GNOME Shell real.
 - Avaliar suporte a GNOME 42–44 (ADR-001).
 - Validar `SecretStore`/`LibsecretBackend` contra um Secret Service real,
   caso algum provider futuro precise de credencial própria.

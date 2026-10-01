@@ -146,7 +146,13 @@ export class CodexSubscriptionProvider extends UsageProvider {
         return {
             providerId: this.id,
             providerName: this.name,
-            manageUrl: 'https://chatgpt.com/codex/settings/usage',
+            // https://chatgpt.com/codex/settings/usage (a URL que o
+            // próprio `/status` do Codex CLI mostra) passou a redirecionar
+            // pra home do ChatGPT — bug conhecido, reportado pela
+            // comunidade em github.com/openai/codex/issues/49350. URL
+            // abaixo é a reportada como funcional nessa mesma issue — ainda
+            // não confirmada manualmente neste projeto.
+            manageUrl: 'https://chatgpt.com/codex/cloud/settings/analytics',
             status,
             windows,
             fetchedAt: new Date().toISOString(),

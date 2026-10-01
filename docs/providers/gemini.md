@@ -90,3 +90,37 @@ programática — a única API oficial existente (ai.google.dev/gemini-api,
 Cloud Console quotas) é exclusivamente sobre uso pago por token/request da
 API para desenvolvedores (AI Studio/Vertex AI), um sistema de cota e
 billing completamente separado do consumo da assinatura consumidor.
+
+## Adendo — Antigravity CLI oficial (antigravity.google) e implementação real (2026-09-30)
+
+A investigação acima (2026-09-29) e o adendo do Antigravity CLI cobriram o
+**Gemini App** (gemini.google.com) e um **Antigravity CLI local mais
+antigo** (`~/.gemini/antigravity-cli`) — nenhum dos dois expõe cota
+programaticamente, conclusão que permanece válida.
+
+Existe, porém, um produto **diferente e oficial**: **Antigravity CLI**
+(`antigravity.google`, binário `agy`), com um comando `/usage`/`/quota` que
+consulta o backend real da conta. A investigação completa — mecanismo de
+autenticação, endpoint real, formato de resposta, e a implementação
+resultante — está documentada no
+[ADR-008](../decisions/ADR-008-antigravity-real-quota-via-secret-service.md).
+Resumo:
+
+- Autenticação: OAuth de conta Google, com o token salvo pelo próprio
+  `agy` no Secret Service do sistema (schema `org.freedesktop.Secret.Generic`,
+  atributos `service=gemini`/`username=antigravity`).
+- Endpoint real (não documentado publicamente, verificado via o projeto
+  open-source MIT `skainguyen1412/antigravity-usage`, que cumpre aqui o
+  mesmo papel que o tokidachi cumpriu para Claude/Codex no ADR-007):
+  `POST https://cloudcode-pa.googleapis.com/v1internal:loadCodeAssist` e
+  `.../v1internal:fetchAvailableModels`, retornando `quotaInfo.remainingFraction`
+  por modelo.
+- Implementado em `extension/lib/providers/antigravitySubscription.js` +
+  `antigravitySubscriptionParser.js`. Classificação: **EXPERIMENTAL** (como
+  Claude/Codex), não `UNAVAILABLE`.
+
+Isso mede o consumo do **Antigravity CLI** (produto separado, com cota
+própria por modelo), não necessariamente o mesmo contador que aparece na
+tela "Limites de uso" do Gemini App/gemini.google.com — essa última
+continua `UNAVAILABLE` pelos motivos já documentados acima (sem API
+oficial, só UI web).

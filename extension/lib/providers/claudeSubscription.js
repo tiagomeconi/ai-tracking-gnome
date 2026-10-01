@@ -85,24 +85,38 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
         // nesta versão do libsoup (ex.: 429). `statusCode` é a propriedade
         // GObject "status-code" (guint puro), sem essa validação.
         const status = message.statusCode;
+        const bodyText = () => {
+            try {
+                return new TextDecoder('utf-8').decode(bytes.get_data());
+            } catch {
+                return '<corpo ilegível>';
+            }
+        };
+
         if (status === 401)
             return this._result('auth_required', [], 'PROVIDER_AUTH_REQUIRED');
-        if (status === 429)
+        if (status === 429) {
+            this._logError(new Error(`status 429, corpo: ${bodyText()}`), 'ClaudeSubscriptionProvider: rate limited');
             return this._result('error', [], 'PROVIDER_RATE_LIMITED');
-        if (status < 200 || status >= 300)
+        }
+        if (status < 200 || status >= 300) {
+            this._logError(new Error(`status ${status}, corpo: ${bodyText()}`), 'ClaudeSubscriptionProvider: resposta com status de erro');
             return this._result('error', [], 'PROVIDER_INVALID_RESPONSE');
+        }
 
         let payload;
         try {
-            payload = JSON.parse(new TextDecoder('utf-8').decode(bytes.get_data()));
+            payload = JSON.parse(bodyText());
         } catch (error) {
-            this._logError(error, 'ClaudeSubscriptionProvider: resposta inválida');
+            this._logError(error, `ClaudeSubscriptionProvider: resposta inválida (corpo: ${bodyText()})`);
             return this._result('error', [], 'PROVIDER_INVALID_RESPONSE');
         }
 
         const windows = parseClaudeUsage(payload);
-        if (windows.length === 0)
+        if (windows.length === 0) {
+            this._logError(new Error(`payload sem janelas reconhecidas: ${JSON.stringify(payload)}`), 'ClaudeSubscriptionProvider: parseClaudeUsage retornou vazio');
             return this._result('error', [], 'PROVIDER_INVALID_RESPONSE');
+        }
 
         return this._result('ok', windows);
     }

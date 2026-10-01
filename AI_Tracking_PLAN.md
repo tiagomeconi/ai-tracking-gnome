@@ -972,52 +972,56 @@ Uma integração de provider adicional exige também:
 
 ## 16. Backlog inicial
 
+> Checklist mantida em sincronia com o estado real do código (ver
+> [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md) — "Status atual" — para o
+> detalhe por fase). Última revisão: 2026-09-30.
+
 ### P0 --- Fundação
 
--   [ ] Confirmar versões GNOME suportadas
--   [ ] Definir stack/tooling
--   [ ] Criar skeleton
--   [ ] Criar contrato `UsageProvider`
--   [ ] Criar modelo `AIProviderUsage`
--   [ ] Criar `MockProvider`
--   [ ] Criar popup inicial
--   [ ] Implementar estados de UI
--   [ ] Implementar normalização
--   [ ] Implementar cache
--   [ ] Implementar refresh
+-   [x] Confirmar versões GNOME suportadas (ADR-001; GNOME 45+ no MVP, 42–44 avaliado como trabalho futuro)
+-   [x] Definir stack/tooling
+-   [x] Criar skeleton (Fase 1)
+-   [x] Criar contrato `UsageProvider`
+-   [x] Criar modelo `AIProviderUsage`
+-   [x] Criar `MockProvider`
+-   [x] Criar popup inicial
+-   [x] Implementar estados de UI
+-   [x] Implementar normalização
+-   [x] Implementar cache
+-   [x] Implementar refresh
 
 ### P0 --- Segurança
 
--   [ ] Definir Secret Service/GNOME Keyring
--   [ ] Sanitizar logs
--   [ ] Definir política de credenciais
--   [ ] Garantir ausência de secrets no repositório
+-   [x] Definir Secret Service/GNOME Keyring (ADR-004, `lib/secrets.js`)
+-   [x] Sanitizar logs (providers nunca logam valor de token/secret, só o providerId e o resultado)
+-   [x] Definir política de credenciais (seção 8.1 + ADR-004)
+-   [x] Garantir ausência de secrets no repositório
 
 ### P1 --- Arquitetura
 
--   [ ] Definir IPC
--   [ ] Implementar serviço local, se confirmado
--   [ ] Scheduler
--   [ ] Retry/backoff
--   [ ] Tratamento de stale
--   [ ] Preferências
+-   [x] Definir IPC (ADR-002: decidido não ter serviço/IPC separado no MVP — tudo roda no processo da extensão)
+-   [ ] Implementar serviço local, se confirmado — **não implementado por decisão de design** (Fase 4 adiada, ADR-002)
+-   [x] Scheduler
+-   [x] Retry/backoff
+-   [x] Tratamento de stale
+-   [x] Preferências (Fase 8)
 
 ### P1 --- Providers
 
--   [ ] Pesquisar ChatGPT/OpenAI
--   [ ] Pesquisar Claude/Anthropic
--   [ ] Pesquisar Gemini/Google
--   [ ] Pesquisar GitHub Copilot
--   [ ] Classificar fontes
--   [ ] Implementar primeiro provider suportado
--   [ ] Implementar providers seguintes
+-   [x] Pesquisar ChatGPT/OpenAI (`docs/providers/chatgpt.md`)
+-   [x] Pesquisar Claude/Anthropic (`docs/providers/claude.md`)
+-   [x] Pesquisar Gemini/Google (`docs/providers/gemini.md`, com adendo do Antigravity CLI oficial em 2026-09-30)
+-   [x] Pesquisar GitHub Copilot (`docs/providers/copilot.md`)
+-   [x] Classificar fontes
+-   [x] Implementar primeiro provider suportado (Claude, ADR-007)
+-   [x] Implementar providers seguintes (Codex — ADR-007; Antigravity/Gemini — ADR-008). GitHub Copilot (único `OFFICIAL_API`) segue com `MockProvider`, adiado a pedido do usuário.
 
 ### P1 --- Qualidade
 
--   [ ] Unit tests
--   [ ] Provider fixtures
--   [ ] Lifecycle tests
--   [ ] Error states
+-   [x] Unit tests (87 testes, `node --test tests/*.test.js`, cobrindo a camada de domínio)
+-   [x] Provider fixtures (payloads de exemplo inline nos testes de cada parser, sem arquivos fixture separados)
+-   [ ] Lifecycle tests — só validação manual num GNOME Shell real (sem GJS neste ambiente de dev, sem CI de UI)
+-   [x] Error states (`auth_required`/`error`/rate limit/timeout cobertos nos testes de provider e parser)
 -   [ ] Accessibility review
 -   [ ] Performance review
 

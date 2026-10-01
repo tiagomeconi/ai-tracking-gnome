@@ -66,7 +66,10 @@ export class LibsecretBackend {
         const Secret = this._Secret;
 
         return new Promise((resolve, reject) => {
-            Secret.password_storev(
+            // GJS expõe a variante GI-friendly `secret_password_storev` (C)
+            // sob o nome sem "v" — confirmado em runtime real ao validar
+            // AntigravitySubscriptionProvider (ver ADR-008).
+            Secret.password_store(
                 this._schema,
                 { 'provider-id': providerId },
                 Secret.COLLECTION_DEFAULT,
@@ -90,7 +93,7 @@ export class LibsecretBackend {
         const Secret = this._Secret;
 
         return new Promise((resolve, reject) => {
-            Secret.password_lookupv(
+            Secret.password_lookup(
                 this._schema,
                 { 'provider-id': providerId },
                 null,
@@ -110,7 +113,7 @@ export class LibsecretBackend {
         const Secret = this._Secret;
 
         return new Promise((resolve, reject) => {
-            Secret.password_clearv(
+            Secret.password_clear(
                 this._schema,
                 { 'provider-id': providerId },
                 null,
