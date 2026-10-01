@@ -8,6 +8,7 @@ import {
     visualStateFromPercent,
     isStale,
     selectMostCritical,
+    computeBudgetProjection,
 } from '../extension/lib/normalizer.js';
 
 test('clampPercent limita entre 0 e 100', () => {
@@ -106,4 +107,44 @@ test('selectMostCritical escolhe a janela mais próxima do limite, não uma méd
 test('selectMostCritical retorna undefined quando não há provider utilizável', () => {
     const providers = [{ providerId: 'a', status: 'error', windows: [] }];
     assert.equal(selectMostCritical(providers), undefined);
+});
+
+test('computeBudgetProjection calcula %/h e %/dia a partir de percent+resetsAt', () => {
+    const now = new Date('2026-01-01T00:00:00Z');
+    const projection = computeBudgetProjection(
+        { percent: 40, resetsAt: '2026-01-11T00:00:00Z' }, // 10 dias = 240h restantes
+        now
+    );
+    assert.ok(projection);
+    assert.equal(projection.remainingPercent, 60);
+    assert.equal(projection.hoursUntilReset, 240);
+    assert.equal(projection.percentPerHour, 0.25);
+    assert.equal(projection.percentPerDay, 6);
+});
+
+test('computeBudgetProjection retorna null sem percent', () => {
+    const now = new Date('2026-01-01T00:00:00Z');
+    assert.equal(computeBudgetProjection({ resetsAt: '2026-01-02T00:00:00Z' }, now), null);
+});
+
+test('computeBudgetProjection retorna null sem resetsAt', () => {
+    const now = new Date('2026-01-01T00:00:00Z');
+    assert.equal(computeBudgetProjection({ percent: 50 }, now), null);
+});
+
+test('computeBudgetProjection retorna null com resetsAt no passado', () => {
+    const now = new Date('2026-01-02T00:00:00Z');
+    assert.equal(computeBudgetProjection({ percent: 50, resetsAt: '2026-01-01T00:00:00Z' }, now), null);
+});
+
+test('computeBudgetProjection retorna null com resetsAt inválido', () => {
+    const now = new Date('2026-01-01T00:00:00Z');
+    assert.equal(computeBudgetProjection({ percent: 50, resetsAt: 'not-a-date' }, now), null);
+});
+
+test('computeBudgetProjection com 100% usado tem remainingPercent 0', () => {
+    const now = new Date('2026-01-01T00:00:00Z');
+    const projection = computeBudgetProjection({ percent: 100, resetsAt: '2026-01-02T00:00:00Z' }, now);
+    assert.equal(projection.remainingPercent, 0);
+    assert.equal(projection.percentPerHour, 0);
 });

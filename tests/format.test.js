@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { formatRemaining, formatElapsed, mostRecentFetchedAt, formatUsedWithUnit, shortProviderName } from '../extension/lib/format.js';
+import { formatRemaining, formatElapsed, mostRecentFetchedAt, formatUsedWithUnit, shortProviderName, formatBudgetProjection } from '../extension/lib/format.js';
 
 const now = new Date('2026-01-01T00:00:00Z');
 
@@ -96,4 +96,18 @@ test('mostRecentFetchedAt escolhe o timestamp mais recente', () => {
         { fetchedAt: '2026-01-01T12:00:00Z' },
     ]);
     assert.equal(result, '2026-01-02T00:00:00.000Z');
+});
+
+test('formatBudgetProjection retorna null sem projeção', () => {
+    assert.equal(formatBudgetProjection(null), null);
+});
+
+test('formatBudgetProjection usa %/h quando faltam menos de 48h', () => {
+    const text = formatBudgetProjection({ hoursUntilReset: 5, percentPerHour: 2.345, percentPerDay: 56.28 });
+    assert.equal(text, '~2,3 %/h até renovar');
+});
+
+test('formatBudgetProjection usa %/dia quando faltam 48h ou mais', () => {
+    const text = formatBudgetProjection({ hoursUntilReset: 240, percentPerHour: 0.25, percentPerDay: 6 });
+    assert.equal(text, '~6 %/dia até renovar');
 });

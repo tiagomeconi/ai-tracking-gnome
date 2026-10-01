@@ -70,6 +70,24 @@ export function shortProviderName(providerName) {
     return providerName.replace(/\s*\([^)]*\)\s*$/, '').trim();
 }
 
+/**
+ * Formata a projeção de ritmo sustentável (`computeBudgetProjection`, ver
+ * normalizer.js) como "~X %/h" ou "~X %/dia" — escolhe a unidade pela
+ * duração restante da janela, pra não mostrar "%/dia" numa janela que
+ * renova em 2 horas (tecnicamente correto por extrapolação, mas confuso).
+ */
+export function formatBudgetProjection(projection) {
+    if (!projection)
+        return null;
+
+    const { hoursUntilReset, percentPerHour, percentPerDay } = projection;
+    const usePerHour = hoursUntilReset < 48;
+    const value = usePerHour ? percentPerHour : percentPerDay;
+    const unit = usePerHour ? '%/h' : '%/dia';
+
+    return `~${value.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} ${unit} até renovar`;
+}
+
 /** fetchedAt mais recente entre uma lista de AIProviderUsage, ou null. */
 export function mostRecentFetchedAt(usages) {
     const timestamps = usages

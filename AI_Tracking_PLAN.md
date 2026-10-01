@@ -1028,8 +1028,15 @@ Uma integração de provider adicional exige também:
 ### P2 --- Evoluções
 
 -   [ ] Ordenação configurável
--   [ ] Notificação de limite
--   [ ] Histórico local opcional
+-   [x] Notificação de limite (`lib/thresholdNotifier.js`, função pura
+    testada; dispara via `Main.notify` quando uma janela cruza
+    atenção/alto/crítico pela primeira vez, até resetar; desligável em
+    Preferências) — ainda não validado num GNOME Shell real.
+-   [x] Histórico local opcional (`lib/history.js`/`historyStore.js`,
+    JSONL em `~/.cache/ai-usage-monitor/`, retenção de 30 dias/20k
+    amostras) + gráfico de tendência numa aba "Estatísticas" nas
+    preferências (`prefs.js`) — ainda não validado num GNOME Shell real
+    (Gtk.DrawingArea + Cairo).
 -   [ ] Providers comunitários
 -   [ ] Export/import de configuração não sensível
 

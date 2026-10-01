@@ -93,3 +93,21 @@ aviso.
 - Nenhuma credencial é escrita, logada ou persistida em outro lugar pela
   extensão — apenas lida em memória para montar o header `Authorization`
   de uma única requisição.
+
+## Adendo — rate limit real no endpoint do Claude (2026-09-30)
+
+Validação num GNOME Shell real revelou que `api.anthropic.com/api/oauth/usage`
+responde **429** com frequência ao ser consultado a cada 5 minutos (intervalo
+de polling padrão da extensão, `REFRESH_INTERVAL_SECONDS` em
+`indicator.js`) — o limite real desse endpoint não-oficial parece ser bem
+mais apertado do que isso. Antes dessa descoberta, `ClaudeSubscriptionProvider`
+simplesmente tentava de novo no próximo ciclo de 5 minutos, continuando a
+receber 429 indefinidamente (`ProviderManager`/`withRetry` só evita retry
+*imediato* dentro do mesmo ciclo, não entre ciclos de polling diferentes).
+
+Corrigido com um cooldown: ao receber 429, o provider lê o header
+`Retry-After` da resposta (segundos ou data HTTP, RFC 9110) e, se ausente,
+usa um cooldown padrão de 30 minutos. Enquanto o cooldown não expira,
+`fetchUsage()` nem chama a rede de novo — retorna erro imediatamente. Isso
+é especificamente sobre respeitar rate limit (seção 8.3 do plano), não
+acrescenta retry adicional nem muda a classificação `EXPERIMENTAL`.

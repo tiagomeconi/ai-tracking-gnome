@@ -11,5 +11,24 @@
         preferências da extensão (RF-05).
       </description>
     </key>
+    <key name="notifications-enabled" type="b">
+      <default>true</default>
+      <summary>Notificações de limite de uso</summary>
+      <description>
+        Quando ativado, mostra uma notificação do sistema sempre que uma
+        janela de uso cruza o limite configurado em
+        "notification-threshold-percent", até ela resetar.
+      </description>
+    </key>
+    <key name="notification-threshold-percent" type="i">
+      <range min="1" max="99"/>
+      <default>80</default>
+      <summary>Percentual de uso pra notificar</summary>
+      <description>
+        A partir de qual percentual de uso (1-99) a extensão notifica —
+        uma vez por janela, até ela resetar. Independente dos thresholds
+        visuais de cor da barra (atenção/alto/crítico).
+      </description>
+    </key>
   </schema>
 </schemalist>

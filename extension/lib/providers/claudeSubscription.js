@@ -42,6 +42,14 @@ const USAGE_URL = 'https://api.anthropic.com/api/oauth/usage';
 const BETA_HEADER = 'oauth-2025-04-20';
 const TIMEOUT_SECONDS = 15;
 
+// Cooldown aplicado após um 429 (seção 8.3 do plano: "respeitar rate
+// limits"). Sem isso, o scheduler da extensão (a cada 5 min, ver
+// indicator.js) continuaria batendo no endpoint mesmo sabendo que ele
+// acabou de recusar — o `ProviderManager`/`withRetry` só evita retry
+// *imediato* dentro de um mesmo ciclo, não entre ciclos de polling
+// diferentes. Usado só quando a resposta não traz `Retry-After`.
+const DEFAULT_RATE_LIMIT_COOLDOWN_MS = 30 * 60_000;
+
 export class ClaudeSubscriptionProvider extends UsageProvider {
     constructor(
         id = 'claude',
@@ -51,6 +59,7 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
         super(id, name);
         this._credentialsPath = credentialsPath;
         this._session = new Soup.Session({ timeout: TIMEOUT_SECONDS });
+        this._rateLimitedUntilMs = 0;
     }
 
     async isConfigured() {
@@ -62,6 +71,14 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
     }
 
     async fetchUsage() {
+        const cooldownRemainingMs = this._rateLimitedUntilMs - Date.now();
+        if (cooldownRemainingMs > 0) {
+            // Ainda em cooldown de um 429 anterior — nem chama de novo, só
+            // pra não insistir num endpoint que acabou de recusar (ver
+            // comentário de `DEFAULT_RATE_LIMIT_COOLDOWN_MS`).
+            return this._result('error', [], 'PROVIDER_RATE_LIMITED');
+        }
+
         const token = await this._readToken();
         if (!token)
             return this._result('auth_required', [], 'PROVIDER_AUTH_REQUIRED');
@@ -96,7 +113,12 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
         if (status === 401)
             return this._result('auth_required', [], 'PROVIDER_AUTH_REQUIRED');
         if (status === 429) {
-            this._logError(new Error(`status 429, corpo: ${bodyText()}`), 'ClaudeSubscriptionProvider: rate limited');
+            const cooldownMs = this._parseRetryAfterMs(message) ?? DEFAULT_RATE_LIMIT_COOLDOWN_MS;
+            this._rateLimitedUntilMs = Date.now() + cooldownMs;
+            this._logError(
+                new Error(`status 429, cooldown de ${Math.round(cooldownMs / 60_000)} min, corpo: ${bodyText()}`),
+                'ClaudeSubscriptionProvider: rate limited'
+            );
             return this._result('error', [], 'PROVIDER_RATE_LIMITED');
         }
         if (status < 200 || status >= 300) {
@@ -119,6 +141,30 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
         }
 
         return this._result('ok', windows);
+    }
+
+    /**
+     * `Retry-After` (RFC 9110) vem como segundos (ex.: "120") ou como uma
+     * data HTTP (ex.: "Wed, 21 Oct 2026 07:28:00 GMT"). Retorna `null`
+     * quando o header está ausente ou não dá pra interpretar — o chamador
+     * cai para `DEFAULT_RATE_LIMIT_COOLDOWN_MS` nesse caso.
+     */
+    _parseRetryAfterMs(message) {
+        const raw = message.response_headers.get_one('Retry-After');
+        if (!raw)
+            return null;
+
+        const seconds = Number(raw.trim());
+        if (Number.isFinite(seconds) && seconds >= 0)
+            return seconds * 1000;
+
+        const parsedMs = Date.parse(raw);
+        if (!Number.isNaN(parsedMs)) {
+            const diffMs = parsedMs - Date.now();
+            return diffMs > 0 ? diffMs : null;
+        }
+
+        return null;
     }
 
     async _readToken() {

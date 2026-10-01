@@ -49,6 +49,47 @@ export function visualStateFromPercent(percent) {
     return 'normal';
 }
 
+/**
+ * Projeção de "ritmo sustentável": quanto % ainda dá pra gastar por hora/dia
+ * até a janela renovar, sem estourar o limite antes do reset. É só
+ * aritmética sobre o que a própria janela já informa (percent + resetsAt)
+ * — não depende de histórico de consumo nem inventa dado novo; por isso
+ * nunca marca o resultado como `estimated` no `UsageWindow` (ver seção 4.1
+ * do plano: não fabricar informação ausente). A UI deve deixar claro que é
+ * uma projeção derivada, não um número que o provider retornou.
+ *
+ * @param {import('./types.js').UsageWindow} window
+ * @param {Date} [now]
+ * @returns {{ remainingPercent: number, hoursUntilReset: number, percentPerHour: number, percentPerDay: number } | null}
+ *   `null` quando não há percent e/ou resetsAt válidos, ou quando resetsAt
+ *   já passou (nesse caso o reset está "atrasado" do ponto de vista do
+ *   cliente — não dá pra projetar contra um prazo no passado).
+ */
+export function computeBudgetProjection(window, now = new Date()) {
+    const percent = computePercent(window);
+    if (typeof percent !== 'number' || !window.resetsAt)
+        return null;
+
+    const resetMs = Date.parse(window.resetsAt);
+    if (Number.isNaN(resetMs))
+        return null;
+
+    const msUntilReset = resetMs - now.getTime();
+    if (msUntilReset <= 0)
+        return null;
+
+    const remainingPercent = Math.max(0, 100 - percent);
+    const hoursUntilReset = msUntilReset / 3_600_000;
+    const percentPerHour = remainingPercent / hoursUntilReset;
+
+    return {
+        remainingPercent,
+        hoursUntilReset,
+        percentPerHour,
+        percentPerDay: percentPerHour * 24,
+    };
+}
+
 /** Marca como stale quando fetchedAt é mais antigo que thresholdMs. */
 export function isStale(fetchedAt, thresholdMs, now = Date.now()) {
     const fetchedMs = Date.parse(fetchedAt);

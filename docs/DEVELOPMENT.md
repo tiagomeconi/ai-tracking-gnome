@@ -163,8 +163,55 @@ tests/               testes de domínio, rodados com `node --test`
   scrollview nenhum): providers com mais de 4 janelas (`menu.js`,
   `COLLAPSE_WINDOWS_THRESHOLD`) mostram um resumo clicável em vez de todas
   as linhas, o que mantém o popup sempre curto o bastante pra caber na
-  tela. Ainda não confirmado pelo usuário nesta versão final (sem
-  scrollview) num GNOME Shell real.
+  tela. Confirmado pelo usuário num GNOME Shell real.
+- Projeção de ritmo sustentável (`computeBudgetProjection` em
+  `lib/normalizer.js`, `formatBudgetProjection` em `lib/format.js`):
+  mostra quanto % ainda dá pra gastar por hora/dia até cada janela
+  renovar, derivado só de `percent`+`resetsAt` já existentes (sem fonte de
+  dado nova). Confirmado funcionando num GNOME Shell real.
+- `ClaudeSubscriptionProvider` estava recebendo 429 (rate limit) do
+  endpoint `api.anthropic.com/api/oauth/usage` a cada ciclo de polling de
+  5 minutos, nunca se recuperando — descoberto via log real
+  (`ClaudeSubscriptionProvider: rate limited`). Corrigido com um cooldown
+  que respeita `Retry-After` (ou 30 min padrão) antes de tentar de novo —
+  ver adendo em ADR-007. Ainda não confirmado se o cooldown resolve de
+  fato (precisa esperar o próximo ciclo pra ver se para de dar 429).
+- Histórico local + gráfico de tendência (backlog P2): `lib/history.js`
+  (parsing/retenção, funções puras) e `lib/historyChart.js`
+  (`aggregateDailyMax`/`layoutBarChart`, funções puras) são testados com
+  Node. `lib/historyStore.js` (I/O de arquivo JSONL em
+  `~/.cache/ai-usage-monitor/history.jsonl`, retenção de 30 dias/20k
+  amostras) depende de GJS. `indicator.js` grava um snapshot por janela a
+  cada refresh com status `ok`; `prefs.js` ganhou uma aba "Estatísticas"
+  com um seletor de série e um **gráfico de barras por dia** (pico do dia,
+  colorido por severidade — mesmas cores do popup) desenhado com
+  `Gtk.DrawingArea`/Cairo.
+
+  O gráfico passou por duas versões: a primeira era uma linha contínua
+  ligando todo snapshot — o usuário apontou corretamente que isso ficaria
+  cada vez mais apertado/ilegível conforme o histórico acumulasse dias
+  (uma janela de 5h reseta várias vezes por dia), e que "somar" os
+  percentuais de cada checagem não tem significado (não é uma métrica
+  cumulativa). Trocado por barras por dia com o **pico** do dia, que
+  continua fazendo sentido independente de quantos resets aconteceram. A
+  linha original (com eixos, rótulos de texto via `setFontSize`/
+  `showText`, e tooltip via `query-tooltip`) chegou a ser **confirmada
+  funcionando pelo usuário** num GNOME Shell real antes da troca; a versão
+  em barras ainda não foi validada ao vivo — é a primeira vez que este
+  projeto desenha retângulos/texto via Cairo ou usa `query-tooltip`, e já
+  teve mais de um caso de nome de método GJS que parecia certo e não era
+  (ver o caso de `password_lookupv` acima).
+- Notificação de limite (backlog P2): `lib/thresholdNotifier.js`
+  (`computeThresholdEvents`, função pura, testada) decide quando uma
+  janela cruza atenção/alto/crítico pela primeira vez (não repete a cada
+  refresh parado no mesmo nível; reseta quando a janela reseta).
+  `indicator.js` dispara a notificação de verdade via `Main.notify` — a
+  API mais simples e estável de notificação do GNOME Shell, escolhida de
+  propósito em vez de `MessageTray.Source`/`Notification` diretos (cuja
+  assinatura mudou entre versões do GNOME, e esse projeto já levou mais
+  de uma rasteira de API GJS que parecia certa). Desligável em
+  Preferências (`notifications-enabled` no gschema). Ainda não validado
+  num GNOME Shell real.
 - Avaliar suporte a GNOME 42–44 (ADR-001).
 - Validar `SecretStore`/`LibsecretBackend` contra um Secret Service real,
   caso algum provider futuro precise de credencial própria.

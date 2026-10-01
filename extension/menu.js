@@ -10,8 +10,8 @@ import Gio from 'gi://Gio';
 import GLib from 'gi://GLib';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-import { computePercent, visualStateFromPercent } from './lib/normalizer.js';
-import { formatRemaining, formatElapsed, formatUsedWithUnit } from './lib/format.js';
+import { computePercent, visualStateFromPercent, computeBudgetProjection } from './lib/normalizer.js';
+import { formatRemaining, formatElapsed, formatUsedWithUnit, formatBudgetProjection } from './lib/format.js';
 
 const STATE_STYLE_CLASS = {
     normal: 'ai-usage-bar-fill-normal',
@@ -32,7 +32,9 @@ const COLLAPSE_WINDOWS_THRESHOLD = 4;
 
 // RF-03: o estado nunca pode ser comunicado só pela cor da barra — todo
 // estado tem uma palavra equivalente, usada no texto e no accessible_name.
-const STATE_LABEL = {
+// Exportado porque indicator.js reaproveita o mesmo texto nas notificações
+// de limite (thresholdNotifier.js).
+export const STATE_LABEL = {
     normal: 'Normal',
     attention: 'Atenção',
     high: 'Alto',
@@ -247,6 +249,18 @@ function buildWindowRow(window) {
         row.add_child(new St.Label({
             text: `Renova em ${remaining}`,
             style_class: 'ai-usage-window-reset',
+        }));
+    }
+
+    // Projeção de ritmo sustentável (seção 4.1: derivado do próprio
+    // percent+resetsAt da janela, não um dado novo do provider) — só faz
+    // sentido mostrar quando ainda sobra cota; com 0% restante não há
+    // "ritmo" pra calcular, só "já estourou".
+    const projection = computeBudgetProjection(window);
+    if (projection && projection.remainingPercent > 0) {
+        row.add_child(new St.Label({
+            text: formatBudgetProjection(projection),
+            style_class: 'ai-usage-window-budget',
         }));
     }
 
