@@ -12,6 +12,9 @@ subscriptions (Claude, ChatGPT/Codex, Gemini, GitHub Copilot) you've already
 used — one indicator in the top bar instead of checking each app.
 
 > Monitors **usage/quota**, never money spent.
+>
+> The extension's UI (popup, preferences, notifications) is in Portuguese
+> (pt-BR) for now — that's why the screenshots below show Portuguese text.
 
 ## Why this exists
 
@@ -28,9 +31,22 @@ it renews.
 - **Popup with per-provider detail** — every configured AI gets its own
   card: usage bars per window (e.g. 5-hour and weekly), reset countdown,
   and a shortcut link straight to that provider's own usage/billing page.
-- **Real quota, not an estimate** — Claude and Codex show the actual
-  percentage from your account, reusing the login you already did in the
-  official CLI (see [Privacy & security](#privacy--security)).
+  Providers with lots of windows (e.g. Antigravity, one per model) collapse
+  into a dropdown so the popup never outgrows your screen.
+- **"Safe pace" projection** — under each bar, a quick read on how much %
+  you can still spend per hour/day before it renews, worked out from the
+  percentage and reset time you already see (no extra tracking needed).
+- **Configurable limit notifications** — get a system notification the
+  moment any window crosses a % you choose, once per window until it
+  resets. Default threshold is 80%, adjustable (or turn it off entirely)
+  in Preferences.
+- **Local usage history + trend chart** — a "Statistics" tab in
+  Preferences shows a daily bar chart (peak usage per day, color-coded)
+  per provider/window, built from snapshots saved on your machine — never
+  sent anywhere.
+- **Real quota, not an estimate** — Claude, Codex and Antigravity show the
+  actual percentage from your account, reusing the login you already did
+  in the official CLI (see [Privacy & security](#privacy--security)).
 - **Preferences** — hide any provider you don't use from the indicator and
   popup, individually.
 - **Manual + automatic refresh** — the popup opens instantly from cache
@@ -56,7 +72,11 @@ it renews.
 
 ### Preferences
 
-<img src="docs/screenshots/preferences.png" alt="Preferences window with a toggle per provider" width="500">
+<img src="docs/screenshots/config.png" alt="Preferences window with a toggle per provider" width="500">
+
+### Statistics
+
+<img src="docs/screenshots/graph.png" alt="Statistics tab with a daily usage bar chart" width="500">
 
 ## Requirements
 
@@ -65,6 +85,8 @@ it renews.
   installed and logged in (`claude auth login`).
 - For **Codex** real data: [Codex CLI](https://developers.openai.com/codex/cli)
   installed and logged in (`codex login`).
+- For **Antigravity** real data: [Antigravity CLI](https://antigravity.google/docs/cli/install)
+  (`agy`) installed and logged in.
 - Without those, the extension still works fine — the corresponding card
   just shows "authentication required" instead of a percentage.
 
@@ -92,14 +114,19 @@ To remove it later: `./scripts/uninstall.sh`.
 
 Click the indicator in the top bar to open the popup:
 
-- Each card shows the provider's name, usage bar(s), and when each window
+- Each card shows the provider's name, usage bar(s), how much % you can
+  still safely spend per hour/day before it resets, and when each window
   resets.
+- Providers with many windows (e.g. Antigravity) collapse into a "N
+  windows — click to expand" dropdown.
 - The **↗** button next to a provider's name opens that provider's own
   usage/billing page in your browser.
 - **↻** at the bottom refreshes on demand; the timestamp next to it shows
   when data was last fetched.
 - **⚙** opens **Preferences**, where you can hide any provider you don't
-  want to see.
+  want to see, turn limit notifications on/off and set the % that
+  triggers them, and open the **Statistics** tab (a daily usage chart per
+  provider/window, built from history saved locally).
 
 ## Troubleshooting
 
@@ -107,9 +134,10 @@ Click the indicator in the top bar to open the popup:
   extension code on a Shell restart. On Wayland, log out and back in; on
   X11, <kbd>Alt</kbd>+<kbd>F2</kbd>, <kbd>r</kbd>, <kbd>Enter</kbd> restarts
   the Shell in place.
-- **Claude/Codex show "authentication required"** — make sure you're
-  logged in on the CLI itself (`claude auth login` / `codex login`); the
-  extension reuses that session, it doesn't have its own login.
+- **Claude/Codex/Antigravity show "authentication required"** — make sure
+  you're logged in on the CLI itself (`claude auth login` / `codex login`
+  / `agy`); the extension reuses that session, it doesn't have its own
+  login.
 - **A card shows a temporary error that clears up on its own** — usually a
   provider's own rate limit from refreshing too often; it recovers
   automatically.
@@ -123,12 +151,15 @@ Click the indicator in the top bar to open the popup:
 
 - Fully open source — audit it yourself.
 - No telemetry, no server of ours: the extension only talks directly to
-  the providers' own official APIs (Anthropic, OpenAI).
-- No credential is ever stored, logged, or sent anywhere else — the
-  Claude Code token, for example, is read into memory only to build one
-  request, never written anywhere.
+  the providers' own official/internal APIs (Anthropic, OpenAI, Google).
+- No credential is ever stored, logged, or sent anywhere else — tokens
+  (file-based for Claude/Codex, system keyring for Antigravity) are read
+  into memory only to build one request, never written anywhere.
 - No web scraping, no browser session cookies — it only reuses the login
   the official CLIs already made for themselves.
+- The usage history behind the Statistics chart is a local file
+  (`~/.cache/ai-usage-monitor/history.jsonl`, pruned after 30 days) — it
+  never leaves your machine.
 
 ## Feedback
 
@@ -157,7 +188,9 @@ each provider are in [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md).
 The technique of reusing the official CLIs' own OAuth login (Claude
 Code/Codex) to query real quota was verified against the open-source
 [tokidachi](https://github.com/Gaalbu/tokidachi) project (MIT), by Gabriel
-Albuquerque.
+Albuquerque. The same technique for Antigravity was verified against
+[antigravity-usage](https://github.com/skainguyen1412/antigravity-usage)
+(MIT).
 
 ## License
 
