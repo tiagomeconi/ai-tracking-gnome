@@ -12,6 +12,19 @@ if ! command -v gnome-shell >/dev/null 2>&1; then
     echo "Aviso: gnome-shell não encontrado no PATH. Este script assume um sistema GNOME Shell (ex.: Zorin OS, Ubuntu, Fedora)." >&2
 fi
 
+# Dependências de runtime (typelibs GObject usados pela extensão). No GNOME
+# Shell normalmente já vêm instaladas, mas confirmamos para dar uma dica útil.
+if command -v gjs >/dev/null 2>&1; then
+    if ! gjs -c "imports.gi.versions.Secret = '1'; imports.gi.Secret;" >/dev/null 2>&1; then
+        echo "Aviso: typelib do libsecret não encontrado (necessário para o Antigravity)." >&2
+        if [ -r /etc/fedora-release ]; then
+            echo "  Fedora: sudo dnf install libsecret" >&2
+        else
+            echo "  Debian/Ubuntu/Zorin: sudo apt install gir1.2-secret-1" >&2
+        fi
+    fi
+fi
+
 mkdir -p "$HOME/.local/share/gnome-shell/extensions"
 
 if [ -L "$TARGET_DIR" ] || [ -e "$TARGET_DIR" ]; then

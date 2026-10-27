@@ -33,6 +33,13 @@ Copilot segue com `MockProvider`, marcado "(em desenvolvimento)" na UI.
 Fichas completas (fonte, autenticação, riscos, docs oficiais) em
 [`docs/providers/`](./providers/).
 
+### App desktop (Windows / Linux sem GNOME)
+
+`desktop/` contém um app Electron de bandeja que reaproveita
+`extension/lib` — ver [`desktop/README.md`](../desktop/README.md) e
+[ADR-009](./decisions/ADR-009-desktop-app-windows-linux.md). Windows ainda
+não foi validado em máquina real.
+
 ### Limitações conhecidas
 
 - Testado principalmente via `npm test` (Node), que cobre a camada de

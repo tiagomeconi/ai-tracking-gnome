@@ -1,0 +1,33 @@
+body { overflow: hidden; }
+#wrapper, main { padding: 4px 0; }
+
+.provider { padding: 8px 14px; }
+.provider + .provider { border-top: 1px solid var(--border); }
+
+.provider-header { display: flex; align-items: center; gap: 8px; }
+.provider-header img { width: 28px; height: 28px; border-radius: 4px; object-fit: contain; }
+.provider-name { flex: 1; font-weight: 700; }
+.account { font-size: 0.8em; font-style: italic; color: var(--muted); }
+.status { color: var(--danger); font-style: italic; margin-top: 4px; }
+.stale { color: var(--muted); font-size: 0.85em; }
+
+.window { margin-top: 8px; display: flex; flex-direction: column; gap: 2px; }
+.bar { height: 8px; border-radius: 4px; background: var(--track); overflow: hidden; }
+.fill { height: 100%; border-radius: 4px; }
+.fill.normal { background: var(--normal); }
+.fill.attention { background: var(--attention); }
+.fill.high { background: var(--high); }
+.fill.critical { background: var(--critical); }
+.fill.unknown { background: var(--unknown); }
+.window-label { font-size: 0.9em; }
+.window-reset { font-size: 0.8em; color: var(--muted); }
+.window-budget { font-size: 0.8em; font-style: italic; color: var(--budget); }
+
+details { margin-top: 6px; }
+summary { cursor: pointer; padding: 4px 0; color: var(--accent); }
+
+footer { display: flex; align-items: center; gap: 4px; padding: 6px 14px; border-top: 1px solid var(--border); }
+footer .logo { width: 24px; height: 24px; margin-right: 4px; }
+footer .spacer { flex: 1; }
+footer button { font-size: 1.1em; }
+.loading, .empty { padding: 8px 14px; font-style: italic; color: var(--muted); margin: 0; }

@@ -1,0 +1,22 @@
+body { padding: 0 20px 20px; }
+header { display: flex; align-items: center; gap: 16px; padding: 16px 0 8px; }
+.logo { width: 56px; height: 56px; }
+nav { display: flex; gap: 4px; }
+nav button[aria-selected="true"] { background: var(--hover); font-weight: 700; }
+
+h2 { font-size: 1em; margin: 20px 0 4px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.row small { display: block; color: var(--muted); }
+input[type="number"], select { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; }
+input[type="number"] { width: 5em; }
+input[type="checkbox"] { width: 18px; height: 18px; }
+
+.chart { display: flex; align-items: flex-end; gap: 4px; height: 220px; margin-top: 12px; padding: 8px 4px 0; border-bottom: 1px solid var(--border); }
+.col { flex: 1; min-width: 6px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; }
+.col .value { font-size: 0.7em; color: var(--muted); }
+.col .bar { width: 100%; border-radius: 3px 3px 0 0; min-height: 1px; }
+.col .bar.normal { background: var(--normal); }
+.col .bar.attention { background: var(--attention); }
+.col .bar.high { background: var(--high); }
+.col .bar.critical { background: var(--critical); }
+.col .day { font-size: 0.65em; color: var(--muted); margin-top: 2px; white-space: nowrap; }

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'self'; script-src 'self'">
+    <title>AI Usage Monitor</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+    <main id="content" aria-live="polite"><p class="loading">Carregando…</p></main>
+    <footer>
+        <img src="../../assets/icons/logo.png" alt="" class="logo">
+        <span id="updated" class="muted"></span>
+        <span class="spacer"></span>
+        <button id="refresh" type="button" title="Atualizar agora" aria-label="Atualizar agora">↻</button>
+        <button id="prefs" type="button" title="Preferências" aria-label="Preferências">⚙</button>
+    </footer>
+    <script src="popup.js"></script>
+</body>
+</html>

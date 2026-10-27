@@ -2,7 +2,7 @@
 
 <img src="extension/icons/logo.png" alt="AI Usage Monitor logo" width="120">
 
-![GNOME Shell](https://img.shields.io/badge/GNOME%20Shell-45--48-4A86CF?logo=gnome&logoColor=white)
+![GNOME Shell](https://img.shields.io/badge/GNOME%20Shell-45--49-4A86CF?logo=gnome&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-Wayland%20%7C%20X11-4c7ba3)
 ![License](https://img.shields.io/badge/license-MIT-green)
 ![Status](https://img.shields.io/badge/status-internal%20testing-dbab09)
@@ -80,7 +80,10 @@ it renews.
 
 ## Requirements
 
-- Linux with GNOME Shell 45–48 (tested on Zorin OS 18 / GNOME Shell 46).
+- Linux with GNOME Shell 45–49 (tested on Zorin OS 18 / GNOME Shell 46).
+  **Fedora Workstation 40–43** ships GNOME 46–49 and is expected to work
+  as-is (not yet tested on real hardware); only `libsecret` is needed, and
+  it's already installed by default (`sudo dnf install libsecret` if not).
 - For **Claude** real data: [Claude Code](https://claude.com/claude-code)
   installed and logged in (`claude auth login`).
 - For **Codex** real data: [Codex CLI](https://developers.openai.com/codex/cli)
@@ -92,8 +95,16 @@ it renews.
 
 ## Installation
 
-Not on extensions.gnome.org yet, so this is the only way to install it for
-now.
+Not on extensions.gnome.org yet, and there are no pre-built releases, so
+installing means cloning the repo. Pick your system:
+
+| System | What to install |
+|---|---|
+| Ubuntu / Zorin / Debian / **Fedora** with GNOME | The [GNOME extension](#gnome-linux-incl-fedora) |
+| **Windows 10/11** | The [tray app](#windows) |
+| Linux with KDE, XFCE, etc. | The [tray app](#linux-without-gnome-kde-xfce-) |
+
+### GNOME (Linux, incl. Fedora)
 
 ```bash
 git clone https://github.com/tiagomeconi/ai-tracking-gnome.git
@@ -101,14 +112,53 @@ cd ai-tracking-gnome
 ./scripts/install.sh
 ```
 
-Then log out/in (Wayland) or restart the Shell with <kbd>Alt</kbd>+<kbd>F2</kbd>,
-<kbd>r</kbd>, <kbd>Enter</kbd> (X11 only), and enable it:
+Then log out/in (Wayland — the default on Fedora) or restart the Shell with
+<kbd>Alt</kbd>+<kbd>F2</kbd>, <kbd>r</kbd>, <kbd>Enter</kbd> (X11 only), and
+enable it:
 
 ```bash
 gnome-extensions enable ai-usage-monitor@prohound.io
 ```
 
 To remove it later: `./scripts/uninstall.sh`.
+
+On **Fedora**, `install.sh` also checks that `libsecret` is present and tells
+you to run `sudo dnf install libsecret` if it isn't.
+
+### Windows
+
+The GNOME extension can't run on Windows, so there is a companion
+**system-tray app** (Electron) with the same providers, popup, notifications
+and history chart. It needs [Node.js](https://nodejs.org/) 20+ and Git.
+
+```powershell
+git clone https://github.com/tiagomeconi/ai-tracking-gnome.git
+cd ai-tracking-gnome\desktop
+npm install
+npm start
+```
+
+The app shows up in the system tray (near the clock): the icon displays the
+percentage of the provider closest to its limit. Left-click opens the panel,
+right-click opens the menu. To get a regular installer (`.exe`) instead of
+running from source:
+
+```powershell
+npm run dist:win     # creates desktop\dist\*.exe
+```
+
+Enable **Start with system** in Preferences if you want it always running.
+Log in on the CLIs (`claude auth login`, `codex login`, `agy`) so there is
+a session to reuse. The tray app has **not been tested on a real Windows
+machine yet** — please report anything odd in an issue.
+
+### Linux without GNOME (KDE, XFCE, ...)
+
+Same steps as Windows (`cd desktop && npm install && npm start`). It needs a
+system tray, and for Antigravity the `secret-tool` command
+(`sudo dnf install libsecret` on Fedora, `sudo apt install libsecret-tools`
+on Debian/Ubuntu). Packages: `npm run dist:linux` creates an AppImage and an
+`.rpm` in `desktop/dist/`. More details in [`desktop/README.md`](./desktop/README.md).
 
 ## Usage
 
@@ -179,6 +229,9 @@ tests run under plain Node:
 ```bash
 npm test
 ```
+
+The Windows/Linux tray app lives in `desktop/` (see its
+[README](./desktop/README.md)); `npm test` at the root runs both test suites.
 
 Project structure, architecture decisions (ADRs), and the research behind
 each provider are in [`docs/DEVELOPMENT.md`](./docs/DEVELOPMENT.md).

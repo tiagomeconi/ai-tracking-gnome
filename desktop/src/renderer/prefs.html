@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; img-src 'self'; style-src 'self'; script-src 'self'">
+    <title>AI Usage Monitor — Preferências</title>
+    <link rel="stylesheet" href="common.css">
+    <link rel="stylesheet" href="prefs.css">
+</head>
+<body>
+    <header>
+        <img src="../../assets/icons/logo.png" alt="AI Usage Monitor" class="logo">
+        <nav role="tablist">
+            <button role="tab" id="tab-general" aria-selected="true" data-panel="general">Geral</button>
+            <button role="tab" id="tab-stats" aria-selected="false" data-panel="stats">Estatísticas</button>
+        </nav>
+    </header>
+
+    <section id="general" role="tabpanel">
+        <h2>Provedores</h2>
+        <p class="muted">Provedores desligados somem do ícone e do painel, e deixam de ser consultados.</p>
+        <div id="providers"></div>
+
+        <h2>Notificações</h2>
+        <label class="row"><span>Avisar quando uma janela passar do limite</span><input type="checkbox" id="notif-enabled"></label>
+        <label class="row"><span>Limite para avisar (%)</span><input type="number" id="notif-threshold" min="1" max="100" step="1"></label>
+
+        <div id="login-section" hidden>
+            <h2>Sistema</h2>
+            <label class="row"><span>Iniciar junto com o sistema</span><input type="checkbox" id="launch-login"></label>
+        </div>
+    </section>
+
+    <section id="stats" role="tabpanel" hidden>
+        <h2>Pico de uso por dia</h2>
+        <p class="muted">Histórico salvo só neste computador, mantido por 30 dias.</p>
+        <label class="row"><span>Provedor / janela</span><select id="series"></select></label>
+        <div id="chart" class="chart" role="img"></div>
+        <p id="chart-empty" class="muted" hidden>Ainda não há histórico. Ele é gravado a cada atualização bem-sucedida.</p>
+    </section>
+
+    <script src="prefs.js"></script>
+</body>
+</html>
