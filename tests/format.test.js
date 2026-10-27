@@ -111,3 +111,17 @@ test('formatBudgetProjection usa %/dia quando faltam 48h ou mais', () => {
     const text = formatBudgetProjection({ hoursUntilReset: 240, percentPerHour: 0.25, percentPerDay: 6 });
     assert.equal(text, '~6 %/dia até renovar');
 });
+
+import { providerStatusMessage } from '../extension/lib/format.js';
+
+test('providerStatusMessage: sessão expirada, rate limit com e sem retryAt, e padrões', () => {
+    const now = new Date('2026-01-01T12:00:00Z');
+    assert.match(providerStatusMessage({ status: 'auth_required', errorCode: 'PROVIDER_SESSION_EXPIRED' }, now), /Sessão expirada/);
+    assert.match(
+        providerStatusMessage({ status: 'error', errorCode: 'PROVIDER_RATE_LIMITED', retryAt: '2026-01-01T12:25:00Z' }, now),
+        /Nova tentativa automática em 25 min/
+    );
+    assert.match(providerStatusMessage({ status: 'error', errorCode: 'PROVIDER_RATE_LIMITED' }, now), /mais tarde/);
+    assert.match(providerStatusMessage({ status: 'auth_required', errorCode: 'PROVIDER_AUTH_REQUIRED' }, now), /Autenticação necessária/);
+    assert.match(providerStatusMessage({ status: 'error' }, now), /Erro temporário/);
+});

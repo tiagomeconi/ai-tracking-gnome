@@ -4,7 +4,7 @@
 // negócio fora do renderer, que apenas desenha.
 
 import { computePercent, visualStateFromPercent, computeBudgetProjection, selectMostCritical } from '../shared/normalizer.js';
-import { formatRemaining, formatElapsed, formatUsedWithUnit, formatBudgetProjection, shortProviderName, mostRecentFetchedAt } from '../shared/format.js';
+import { formatRemaining, formatElapsed, formatUsedWithUnit, formatBudgetProjection, shortProviderName, mostRecentFetchedAt, providerStatusMessage } from '../shared/format.js';
 
 // RF-03: o estado nunca é comunicado só pela cor — sempre há uma palavra.
 export const STATE_LABEL = {
@@ -13,12 +13,6 @@ export const STATE_LABEL = {
     high: 'Alto',
     critical: 'Crítico',
     unknown: 'Desconhecido',
-};
-
-const STATUS_LABEL = {
-    unavailable: 'Indisponível no momento. Tentaremos de novo automaticamente.',
-    auth_required: 'Autenticação necessária. Reconecte esta conta para retomar o monitoramento.',
-    error: 'Erro temporário ao buscar os dados. Tentando de novo automaticamente.',
 };
 
 // Providers com muitas janelas (ex.: Antigravity, uma por modelo) viram um
@@ -61,7 +55,7 @@ function buildProvider(usage, now) {
     };
 
     if (['unavailable', 'auth_required', 'error'].includes(usage.status))
-        return { ...base, message: STATUS_LABEL[usage.status] };
+        return { ...base, message: providerStatusMessage(usage, now) };
     if (!usage.windows || usage.windows.length === 0)
         return { ...base, message: 'Consumo indisponível por integração suportada' };
 

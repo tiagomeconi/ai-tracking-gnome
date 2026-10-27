@@ -11,7 +11,7 @@ import GLib from 'gi://GLib';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import { computePercent, visualStateFromPercent, computeBudgetProjection } from './lib/normalizer.js';
-import { formatRemaining, formatElapsed, formatUsedWithUnit, formatBudgetProjection } from './lib/format.js';
+import { formatRemaining, formatElapsed, formatUsedWithUnit, formatBudgetProjection, providerStatusMessage } from './lib/format.js';
 
 const STATE_STYLE_CLASS = {
     normal: 'ai-usage-bar-fill-normal',
@@ -40,15 +40,6 @@ export const STATE_LABEL = {
     high: 'Alto',
     critical: 'Crítico',
     unknown: 'Desconhecido',
-};
-
-// Mensagens acionáveis (seção 14: "a UI deve converter códigos técnicos em
-// mensagens úteis"). Preferências (Fase 8) ainda não existem, então o texto
-// não referencia uma tela específica — só orienta a ação esperada.
-const STATUS_LABEL = {
-    unavailable: 'Indisponível no momento. Tentaremos de novo automaticamente.',
-    auth_required: 'Autenticação necessária. Reconecte esta conta para retomar o monitoramento.',
-    error: 'Erro temporário ao buscar os dados. Tentando de novo automaticamente.',
 };
 
 /**
@@ -145,7 +136,7 @@ export function buildProviderMenuItem(usage, extensionPath = null) {
     }
 
     if (['unavailable', 'auth_required', 'error'].includes(usage.status)) {
-        const message = STATUS_LABEL[usage.status] ?? usage.status;
+        const message = providerStatusMessage(usage);
         box.add_child(new St.Label({ text: message, style_class: 'ai-usage-provider-status' }));
         item.add_child(box);
         return [item];

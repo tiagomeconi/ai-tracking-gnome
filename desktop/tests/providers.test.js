@@ -19,10 +19,10 @@ function jsonResponse(status, body, headers = {}) {
     };
 }
 
-function writeCredentials(token) {
+function writeCredentials(token, expiresAt) {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'aum-claude-'));
     const file = path.join(dir, '.credentials.json');
-    fs.writeFileSync(file, JSON.stringify({ claudeAiOauth: { accessToken: token } }));
+    fs.writeFileSync(file, JSON.stringify({ claudeAiOauth: { accessToken: token, expiresAt } }));
     return file;
 }
 
@@ -51,6 +51,26 @@ test('claude: resposta 200 vira janelas reais e envia o bearer certo', async () 
     assert.ok(usage.windows.length >= 1);
     assert.equal(seen.init.headers.Authorization, 'Bearer tok123');
     assert.equal(seen.init.headers['anthropic-beta'], 'oauth-2025-04-20');
+});
+
+test('claude: token vencido -> PROVIDER_SESSION_EXPIRED sem chamar a rede', async () => {
+    const provider = new ClaudeSubscriptionProvider({
+        credentialsPath: writeCredentials('t', Date.now() - 1000),
+        fetchImpl: async () => { throw new Error('não deveria chamar'); },
+    });
+    const usage = await provider.fetchUsage();
+    assert.equal(usage.status, 'auth_required');
+    assert.equal(usage.errorCode, 'PROVIDER_SESSION_EXPIRED');
+});
+
+test('claude: 429 informa retryAt a partir do Retry-After', async () => {
+    const provider = new ClaudeSubscriptionProvider({
+        credentialsPath: writeCredentials('t', Date.now() + 3_600_000),
+        fetchImpl: async () => jsonResponse(429, {}, { 'retry-after': '600' }),
+    });
+    const usage = await provider.fetchUsage();
+    const waitMs = Date.parse(usage.retryAt) - Date.now();
+    assert.ok(waitMs > 590_000 && waitMs <= 600_000);
 });
 
 test('claude: 401 -> auth_required; 429 entra em cooldown e não rechama a rede', async () => {

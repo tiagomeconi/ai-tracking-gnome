@@ -12,6 +12,7 @@ import path from 'node:path';
 
 import { UsageProvider } from '../../shared/providers/provider.js';
 import { parseClaudeUsage } from '../../shared/providers/claudeSubscriptionParser.js';
+import { parseClaudeCredentials } from '../../shared/providers/claudeCredentials.js';
 import { claudeConfigDir } from '../paths.js';
 import { makeResult, logError } from './result.js';
 
@@ -53,7 +54,7 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
     }
 
     async isConfigured() {
-        return (await this._readToken()) !== null;
+        return (await this._readCredentials()) !== null;
     }
 
     async healthCheck() {
@@ -64,9 +65,14 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
         if (this._rateLimitedUntilMs > Date.now())
             return this._result('error', [], 'PROVIDER_RATE_LIMITED');
 
-        const token = await this._readToken();
-        if (!token)
+        const credentials = await this._readCredentials();
+        if (!credentials)
             return this._result('auth_required', [], 'PROVIDER_AUTH_REQUIRED');
+        // Token vencido: só o Claude Code o renova (ao ser usado) — nem
+        // adianta chamar a API, que responderia 401.
+        if (credentials.expired)
+            return this._result('auth_required', [], 'PROVIDER_SESSION_EXPIRED');
+        const token = credentials.token;
 
         let response;
         let bodyText;
@@ -118,17 +124,18 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
         return this._result('ok', windows);
     }
 
-    async _readToken() {
+    async _readCredentials() {
         try {
-            const json = JSON.parse(await fs.readFile(this._credentialsPath, 'utf8'));
-            const token = json?.claudeAiOauth?.accessToken;
-            return typeof token === 'string' && token.length > 0 ? token : null;
+            return parseClaudeCredentials(JSON.parse(await fs.readFile(this._credentialsPath, 'utf8')));
         } catch {
             return null; // ausente/ilegível — tratado como não configurado
         }
     }
 
     _result(status, windows, errorCode) {
-        return makeResult(this, MANAGE_URL, status, windows, errorCode);
+        const result = makeResult(this, MANAGE_URL, status, windows, errorCode);
+        if (errorCode === 'PROVIDER_RATE_LIMITED' && this._rateLimitedUntilMs > Date.now())
+            result.retryAt = new Date(this._rateLimitedUntilMs).toISOString();
+        return result;
     }
 }

@@ -38,6 +38,8 @@
  * @property {string} fetchedAt - ISO 8601
  * @property {boolean} stale
  * @property {string} [errorCode]
+ * @property {string} [retryAt] - ISO 8601; com `PROVIDER_RATE_LIMITED`, quando
+ *   o provider volta a consultar a API (fim do cooldown).
  * @property {string} [manageUrl] - link para a página de uso/cobrança do
  *   provedor (ex.: https://claude.ai/settings/usage), aberto pelo botão de
  *   atalho no popup.
@@ -46,6 +48,7 @@
 // Códigos de erro internos estáveis (seção 14 do plano).
 export const ErrorCode = Object.freeze({
     PROVIDER_AUTH_REQUIRED: 'PROVIDER_AUTH_REQUIRED',
+    PROVIDER_SESSION_EXPIRED: 'PROVIDER_SESSION_EXPIRED',
     PROVIDER_RATE_LIMITED: 'PROVIDER_RATE_LIMITED',
     PROVIDER_TIMEOUT: 'PROVIDER_TIMEOUT',
     PROVIDER_UNAVAILABLE: 'PROVIDER_UNAVAILABLE',

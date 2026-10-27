@@ -99,3 +99,29 @@ export function mostRecentFetchedAt(usages) {
 
     return new Date(Math.max(...timestamps)).toISOString();
 }
+
+const STATUS_MESSAGE = {
+    unavailable: 'Indisponível no momento. Tentaremos de novo automaticamente.',
+    auth_required: 'Autenticação necessária. Reconecte esta conta para retomar o monitoramento.',
+    error: 'Erro temporário ao buscar os dados. Tentando de novo automaticamente.',
+};
+
+/**
+ * Mensagem acionável para um provider em `unavailable`/`auth_required`/
+ * `error` (seção 14: converter códigos técnicos em texto útil). Distingue
+ * "sessão expirada" (token vencido: abrir o CLI uma vez resolve) de "limite
+ * de consultas" (rate limit: só esperar) do erro genérico.
+ */
+export function providerStatusMessage(usage, now = new Date()) {
+    if (usage.errorCode === 'PROVIDER_SESSION_EXPIRED')
+        return 'Sessão expirada. Abra o CLI deste provedor (ex.: rode `claude`) uma vez para renovar o login.';
+
+    if (usage.errorCode === 'PROVIDER_RATE_LIMITED') {
+        const wait = formatRemaining(usage.retryAt, now);
+        return wait
+            ? `O provedor limitou as consultas. Nova tentativa automática em ${wait}.`
+            : 'O provedor limitou as consultas. Tentaremos de novo mais tarde.';
+    }
+
+    return STATUS_MESSAGE[usage.status] ?? usage.status;
+}

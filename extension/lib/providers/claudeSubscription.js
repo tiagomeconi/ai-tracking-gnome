@@ -26,6 +26,7 @@ import Soup from 'gi://Soup?version=3.0';
 
 import { UsageProvider } from './provider.js';
 import { parseClaudeUsage } from './claudeSubscriptionParser.js';
+import { parseClaudeCredentials } from './claudeCredentials.js';
 
 for (const [proto, asyncName, finishName] of [
     [Gio.File.prototype, 'load_contents_async', 'load_contents_finish'],
@@ -63,7 +64,7 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
     }
 
     async isConfigured() {
-        return (await this._readToken()) !== null;
+        return (await this._readCredentials()) !== null;
     }
 
     async healthCheck() {
@@ -79,9 +80,14 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
             return this._result('error', [], 'PROVIDER_RATE_LIMITED');
         }
 
-        const token = await this._readToken();
-        if (!token)
+        const credentials = await this._readCredentials();
+        if (!credentials)
             return this._result('auth_required', [], 'PROVIDER_AUTH_REQUIRED');
+        // Token vencido: só o Claude Code o renova (ao ser usado) — nem
+        // adianta chamar a API, que responderia 401.
+        if (credentials.expired)
+            return this._result('auth_required', [], 'PROVIDER_SESSION_EXPIRED');
+        const token = credentials.token;
 
         const message = Soup.Message.new('GET', USAGE_URL);
         message.request_headers.append('Authorization', `Bearer ${token}`);
@@ -167,12 +173,10 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
         return null;
     }
 
-    async _readToken() {
+    async _readCredentials() {
         try {
             const [contents] = await Gio.File.new_for_path(this._credentialsPath).load_contents_async(null);
-            const json = JSON.parse(new TextDecoder('utf-8').decode(contents));
-            const token = json?.claudeAiOauth?.accessToken;
-            return typeof token === 'string' && token.length > 0 ? token : null;
+            return parseClaudeCredentials(JSON.parse(new TextDecoder('utf-8').decode(contents)));
         } catch {
             return null; // arquivo ausente/ilegível — tratado como não configurado
         }
@@ -180,6 +184,9 @@ export class ClaudeSubscriptionProvider extends UsageProvider {
 
     _result(status, windows, errorCode) {
         return {
+            ...(errorCode === 'PROVIDER_RATE_LIMITED' && this._rateLimitedUntilMs > Date.now()
+                ? { retryAt: new Date(this._rateLimitedUntilMs).toISOString() }
+                : {}),
             providerId: this.id,
             providerName: this.name,
             manageUrl: 'https://claude.ai/settings/usage',
