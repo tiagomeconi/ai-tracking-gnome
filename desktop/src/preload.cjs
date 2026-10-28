@@ -12,5 +12,13 @@ contextBridge.exposeInMainWorld('aiUsage', {
     reportHeight: (height) => ipcRenderer.send('popup-height', height),
     getSettings: () => ipcRenderer.invoke('settings:get'),
     updateSettings: (patch) => ipcRenderer.invoke('settings:update', patch),
+    // Widget flutuante: o arraste é manual (deltas em px) porque regiões
+    // `app-region: drag` engolem clique direito/duplo clique no Windows.
+    widgetDragStart: () => ipcRenderer.send('widget-drag-start'),
+    widgetDragMove: (dx, dy) => ipcRenderer.send('widget-drag-move', dx, dy),
+    widgetDragEnd: () => ipcRenderer.send('widget-drag-end'),
+    widgetMenu: () => ipcRenderer.send('widget-menu'),
+    openPopup: () => ipcRenderer.send('open-popup'),
+    reportWidgetHeight: (height) => ipcRenderer.send('widget-height', height),
     getHistory: () => ipcRenderer.invoke('history:get'),
 });

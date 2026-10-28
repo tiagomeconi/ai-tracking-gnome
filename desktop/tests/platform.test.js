@@ -8,7 +8,7 @@ import { dataDir, configDir, claudeConfigDir } from '../src/main/paths.js';
 import { SettingsStore, sanitizeSettings } from '../src/main/settings.js';
 import { UsageHistoryStore } from '../src/main/historyStore.js';
 import { readKeyringSecret, decodeWindowsBlob } from '../src/main/credentials.js';
-import { computePopupPosition } from '../src/main/popupPosition.js';
+import { computePopupPosition, resolveWidgetPosition } from '../src/main/popupPosition.js';
 
 test('paths: Windows usa LOCALAPPDATA/APPDATA', () => {
     const env = { LOCALAPPDATA: 'C:\\Users\\a\\AppData\\Local', APPDATA: 'C:\\Users\\a\\AppData\\Roaming' };
@@ -116,4 +116,29 @@ test('popup: abaixo do ícone quando a barra está no topo; clamp nas bordas', (
     const pos = computePopupPosition({ x: 0, y: 0, width: 24, height: 24 }, { width: 380, height: 400 }, work);
     assert.equal(pos.y, 38); // 24 + 8 = 32 < início da área útil + margem (30 + 8)
     assert.equal(pos.x, 8);
+});
+
+test('settings: trayProvider/trayStyle têm padrão e rejeitam valores inválidos', () => {
+    assert.equal(sanitizeSettings({}).trayProvider, 'auto');
+    assert.equal(sanitizeSettings({}).trayStyle, 'number');
+    assert.equal(sanitizeSettings({ trayStyle: 'x', trayProvider: 5 }).trayStyle, 'number');
+    assert.equal(sanitizeSettings({ trayStyle: 'gauge', trayProvider: 'claude' }).trayStyle, 'gauge');
+    assert.equal(sanitizeSettings({ trayStyle: 'gauge', trayProvider: 'claude' }).trayProvider, 'claude');
+});
+
+test('settings: widget desligado por padrão, opacidade 40..100 e posição validada', () => {
+    const d = sanitizeSettings({});
+    assert.deepEqual([d.widgetEnabled, d.widgetOpacity, d.widgetPosition], [false, 90, null]);
+    assert.equal(sanitizeSettings({ widgetOpacity: 5 }).widgetOpacity, 40);
+    assert.equal(sanitizeSettings({ widgetOpacity: 500 }).widgetOpacity, 100);
+    assert.deepEqual(sanitizeSettings({ widgetPosition: { x: 10.4, y: 20 } }).widgetPosition, { x: 10, y: 20 });
+    assert.equal(sanitizeSettings({ widgetPosition: { x: 'a', y: 1 } }).widgetPosition, null);
+});
+
+test('resolveWidgetPosition: usa a salva se visível; senão canto inferior direito', () => {
+    const area = { x: 0, y: 0, width: 1920, height: 1040 };
+    const size = { width: 210, height: 100 };
+    assert.deepEqual(resolveWidgetPosition({ x: 300, y: 200 }, size, [area], area), { x: 300, y: 200 });
+    assert.deepEqual(resolveWidgetPosition({ x: 5000, y: 200 }, size, [area], area), { x: 1694, y: 924 });
+    assert.deepEqual(resolveWidgetPosition(null, size, [area], area), { x: 1694, y: 924 });
 });

@@ -12,7 +12,14 @@ export const DEFAULT_SETTINGS = Object.freeze({
     notificationsEnabled: true,
     notificationThresholdPercent: DEFAULT_THRESHOLD_PERCENT,
     launchAtLogin: false,
+    trayProvider: 'auto',
+    trayStyle: 'number',
+    widgetEnabled: false,
+    widgetOpacity: 90,
+    widgetPosition: null,
 });
+
+export const TRAY_STYLES = ['number', 'gauge'];
 
 export function sanitizeSettings(raw) {
     const input = raw && typeof raw === 'object' ? raw : {};
@@ -31,6 +38,17 @@ export function sanitizeSettings(raw) {
         launchAtLogin: typeof input.launchAtLogin === 'boolean'
             ? input.launchAtLogin
             : DEFAULT_SETTINGS.launchAtLogin,
+        trayProvider: typeof input.trayProvider === 'string' && input.trayProvider
+            ? input.trayProvider
+            : DEFAULT_SETTINGS.trayProvider,
+        trayStyle: TRAY_STYLES.includes(input.trayStyle) ? input.trayStyle : DEFAULT_SETTINGS.trayStyle,
+        widgetEnabled: typeof input.widgetEnabled === 'boolean' ? input.widgetEnabled : DEFAULT_SETTINGS.widgetEnabled,
+        widgetOpacity: Number.isFinite(Number(input.widgetOpacity))
+            ? Math.min(100, Math.max(40, Math.round(Number(input.widgetOpacity))))
+            : DEFAULT_SETTINGS.widgetOpacity,
+        widgetPosition: Number.isFinite(input.widgetPosition?.x) && Number.isFinite(input.widgetPosition?.y)
+            ? { x: Math.round(input.widgetPosition.x), y: Math.round(input.widgetPosition.y) }
+            : null,
     };
 }
 

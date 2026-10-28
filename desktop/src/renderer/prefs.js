@@ -54,6 +54,27 @@ async function init() {
 
     renderProviders(data.providers);
 
+    const trayProvider = $('tray-provider');
+    trayProvider.replaceChildren(...[{ id: 'auto', name: 'Automático (mais crítica)' }, ...data.providers].map((p) => {
+        const option = document.createElement('option');
+        option.value = p.id;
+        option.textContent = p.name;
+        return option;
+    }));
+    trayProvider.value = settings.trayProvider;
+    trayProvider.addEventListener('change', () => save({ trayProvider: trayProvider.value }));
+    $('tray-style').value = settings.trayStyle;
+    $('tray-style').addEventListener('change', (event) => save({ trayStyle: event.target.value }));
+
+    $('widget-enabled').checked = settings.widgetEnabled;
+    $('widget-opacity').value = settings.widgetOpacity;
+    $('widget-opacity').disabled = !settings.widgetEnabled;
+    $('widget-enabled').addEventListener('change', (event) => {
+        $('widget-opacity').disabled = !event.target.checked;
+        save({ widgetEnabled: event.target.checked });
+    });
+    $('widget-opacity').addEventListener('change', (event) => save({ widgetOpacity: Number(event.target.value) }));
+
     $('notif-enabled').checked = settings.notificationsEnabled;
     $('notif-threshold').value = settings.notificationThresholdPercent;
     $('notif-threshold').disabled = !settings.notificationsEnabled;

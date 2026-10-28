@@ -147,6 +147,11 @@ running from source:
 npm run dist:win     # creates desktop\dist\*.exe
 ```
 
+Preferences also lets you pick which AI the tray icon shows, switch it to a
+gauge style, and enable an optional **floating widget** (small translucent
+always-on-top square you can drag anywhere) — see
+[`desktop/README.md`](./desktop/README.md#tray-icon-floating-panel-and-widget).
+
 Enable **Start with system** in Preferences if you want it always running.
 Log in on the CLIs (`claude auth login`, `codex login`, `agy`) so there is
 a session to reuse. The tray app has **not been tested on a real Windows

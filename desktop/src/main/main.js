@@ -15,9 +15,9 @@ import { MockProvider } from '../shared/providers/mock.js';
 import { ClaudeSubscriptionProvider } from './providers/claudeSubscription.js';
 import { CodexSubscriptionProvider } from './providers/codexSubscription.js';
 import { AntigravitySubscriptionProvider } from './providers/antigravitySubscription.js';
-import { indicatorText, thresholdNotificationText } from './viewModel.js';
-import { renderTrayIcon } from './trayIcon.js';
-import { computePopupPosition } from './popupPosition.js';
+import { indicatorText, trayReading, thresholdNotificationText } from './viewModel.js';
+import { renderTrayIcon, renderGaugeIcon } from './trayIcon.js';
+import { computePopupPosition, resolveWidgetPosition } from './popupPosition.js';
 import { aggregateDailyMax } from '../shared/historyChart.js';
 import { listHistorySeries } from '../shared/history.js';
 
@@ -28,6 +28,8 @@ const preloadPath = path.join(here, '..', 'preload.cjs');
 
 const POPUP_WIDTH = 380;
 const POPUP_MIN_HEIGHT = 120;
+const WIDGET_WIDTH = 210;
+const WIDGET_MIN_HEIGHT = 40;
 
 // Mesma lista da aba "Provedores" da extensão GNOME (prefs.js).
 const PROVIDER_CHOICES = [
@@ -57,7 +59,14 @@ const service = new UsageService({
 let tray = null;
 let popup = null;
 let prefsWindow = null;
+let widget = null;
+let widgetHeight = WIDGET_MIN_HEIGHT;
+let widgetDragOrigin = null;
 let popupHeight = POPUP_MIN_HEIGHT;
+// Popup arrastado pelo usuário: fica fixo (não some ao perder o foco) até ser fechado.
+let popupPinned = false;
+let lastProgrammaticMove = 0;
+let lastBlurHide = 0;
 let lastViewModel = service.getViewModel();
 
 function secureWebPreferences() {
@@ -66,9 +75,13 @@ function secureWebPreferences() {
 
 function updateTray() {
     const vm = lastViewModel;
-    const icon = nativeImage.createFromBuffer(renderTrayIcon(vm.best?.percent ?? null, vm.best?.state ?? 'unknown'), { scaleFactor: 2 });
-    tray.setImage(icon);
-    tray.setToolTip(`AI Usage Monitor — ${indicatorText(vm)}`);
+    const { trayProvider, trayStyle } = settings.get();
+    const reading = trayReading(vm, trayProvider);
+    const percent = reading?.percent ?? null;
+    const state = reading?.state ?? 'unknown';
+    const png = trayStyle === 'gauge' ? renderGaugeIcon(percent, state) : renderTrayIcon(percent, state);
+    tray.setImage(nativeImage.createFromBuffer(png, { scaleFactor: trayStyle === 'gauge' ? 3 : 2 }));
+    tray.setToolTip(`AI Usage Monitor — ${reading ? `${reading.label} ${reading.percent}%` : indicatorText(vm)}`);
 }
 
 function createPopup() {
@@ -78,7 +91,7 @@ function createPopup() {
         show: false,
         frame: false,
         resizable: false,
-        movable: false,
+        movable: true,
         minimizable: false,
         maximizable: false,
         skipTaskbar: true,
@@ -87,9 +100,73 @@ function createPopup() {
         webPreferences: secureWebPreferences(),
     });
     popup.loadFile(path.join(rendererDir, 'popup.html'));
-    popup.on('blur', () => popup.hide());
+    popup.on('blur', () => {
+        if (popupPinned)
+            return;
+        lastBlurHide = Date.now();
+        popup.hide();
+    });
+    // Arrastar o painel (pela barra inferior) o fixa onde foi solto.
+    popup.on('move', () => {
+        if (popup.isVisible() && Date.now() - lastProgrammaticMove > 250)
+            popupPinned = true;
+    });
+    popup.on('hide', () => {
+        popupPinned = false;
+    });
     popup.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     popup.webContents.on('will-navigate', (event) => event.preventDefault());
+}
+
+function createWidget() {
+    const { widgetPosition, widgetOpacity } = settings.get();
+    const displays = screen.getAllDisplays();
+    const { x, y } = resolveWidgetPosition(
+        widgetPosition,
+        { width: WIDGET_WIDTH, height: widgetHeight },
+        displays.map((d) => d.workArea),
+        screen.getPrimaryDisplay().workArea,
+    );
+    widget = new BrowserWindow({
+        x,
+        y,
+        width: WIDGET_WIDTH,
+        height: widgetHeight,
+        frame: false,
+        transparent: true,
+        hasShadow: false,
+        resizable: false,
+        minimizable: false,
+        maximizable: false,
+        fullscreenable: false,
+        skipTaskbar: true,
+        alwaysOnTop: true,
+        focusable: false, // não rouba o foco dos outros aplicativos
+        webPreferences: secureWebPreferences(),
+    });
+    widget.setAlwaysOnTop(true, 'floating');
+    widget.setOpacity(widgetOpacity / 100);
+    widget.loadFile(path.join(rendererDir, 'widget.html'));
+    widget.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+    widget.webContents.on('will-navigate', (event) => event.preventDefault());
+    widget.on('closed', () => {
+        widget = null;
+    });
+}
+
+/** Cria/mostra ou destrói o widget conforme as preferências. */
+function applyWidgetSettings() {
+    const { widgetEnabled, widgetOpacity } = settings.get();
+    if (widgetEnabled && !widget)
+        createWidget();
+    else if (!widgetEnabled && widget)
+        widget.close();
+    widget?.setOpacity(widgetOpacity / 100);
+}
+
+function setWidgetEnabled(enabled) {
+    settings.update({ widgetEnabled: enabled });
+    applyWidgetSettings();
 }
 
 function positionPopup() {
@@ -101,6 +178,7 @@ function positionPopup() {
     }
     const display = screen.getDisplayNearestPoint({ x: anchor.x, y: anchor.y });
     const { x, y } = computePopupPosition(anchor, { width: POPUP_WIDTH, height: popupHeight }, display.workArea);
+    lastProgrammaticMove = Date.now();
     popup.setBounds({ x, y, width: POPUP_WIDTH, height: popupHeight });
 }
 
@@ -109,6 +187,10 @@ function togglePopup() {
         popup.hide();
         return;
     }
+    // Clicar no ícone com o painel aberto tira o foco (blur esconde) antes do
+    // clique chegar aqui; sem esta guarda o painel fecharia e reabriria.
+    if (Date.now() - lastBlurHide < 300)
+        return;
     positionPopup();
     popup.webContents.send('state', service.getViewModel());
     popup.show();
@@ -138,6 +220,7 @@ function openPreferences() {
 function buildContextMenu() {
     return Menu.buildFromTemplate([
         { label: 'Mostrar painel', click: () => togglePopup() },
+        { label: 'Alternar widget flutuante', click: () => setWidgetEnabled(!settings.get().widgetEnabled) },
         { label: 'Atualizar agora', click: () => service.refresh() },
         { label: 'Preferências…', click: () => openPreferences() },
         { type: 'separator' },
@@ -159,6 +242,41 @@ function registerIpc() {
         openPreferences();
     });
     ipcMain.on('hide-popup', () => popup.hide());
+    ipcMain.on('open-popup', () => {
+        if (!popup.isVisible())
+            togglePopup();
+    });
+
+    ipcMain.on('widget-drag-start', () => {
+        widgetDragOrigin = widget ? widget.getPosition() : null;
+    });
+    ipcMain.on('widget-drag-move', (_event, dx, dy) => {
+        if (!widget || !widgetDragOrigin || !Number.isFinite(dx) || !Number.isFinite(dy))
+            return;
+        widget.setPosition(Math.round(widgetDragOrigin[0] + dx), Math.round(widgetDragOrigin[1] + dy));
+    });
+    ipcMain.on('widget-drag-end', () => {
+        if (widget && widgetDragOrigin) {
+            const [x, y] = widget.getPosition();
+            settings.update({ widgetPosition: { x, y } });
+        }
+        widgetDragOrigin = null;
+    });
+    ipcMain.on('widget-height', (_event, height) => {
+        if (!Number.isFinite(height) || !widget)
+            return;
+        widgetHeight = Math.round(Math.min(Math.max(height, WIDGET_MIN_HEIGHT), 600));
+        widget.setSize(WIDGET_WIDTH, widgetHeight);
+    });
+    ipcMain.on('widget-menu', () => {
+        Menu.buildFromTemplate([
+            { label: 'Abrir painel', click: () => { if (!popup.isVisible()) togglePopup(); } },
+            { label: 'Atualizar agora', click: () => service.refresh() },
+            { label: 'Preferências…', click: () => openPreferences() },
+            { type: 'separator' },
+            { label: 'Ocultar widget', click: () => setWidgetEnabled(false) },
+        ]).popup({ window: widget ?? undefined });
+    });
     ipcMain.on('popup-height', (_event, height) => {
         if (!Number.isFinite(height))
             return;
@@ -181,14 +299,16 @@ function registerIpc() {
         canLaunchAtLogin: process.platform !== 'linux',
     }));
     ipcMain.handle('settings:update', (_event, patch) => {
-        const allowed = ['disabledProviders', 'notificationsEnabled', 'notificationThresholdPercent', 'launchAtLogin'];
+        const allowed = ['disabledProviders', 'notificationsEnabled', 'notificationThresholdPercent', 'launchAtLogin', 'trayProvider', 'trayStyle', 'widgetEnabled', 'widgetOpacity'];
         const safePatch = Object.fromEntries(Object.entries(patch ?? {}).filter(([key]) => allowed.includes(key)));
         const next = settings.update(safePatch);
         applyLoginItem();
+        applyWidgetSettings();
         // Mudança de providers habilitados reflete já no popup/ícone.
         lastViewModel = service.getViewModel();
         updateTray();
         popup?.webContents.send('state', lastViewModel);
+        widget?.webContents.send('state', lastViewModel);
         service.refresh();
         return next;
     });
@@ -220,22 +340,26 @@ app.whenReady().then(() => {
     tray.setToolTip('AI Usage Monitor');
 
     const menu = buildContextMenu();
+    tray.on('click', togglePopup);
     if (process.platform === 'linux') {
-        // Muitos ambientes Linux (AppIndicator) só entregam o menu, não o evento de clique.
+        // KDE (StatusNotifierItem) entrega o clique esquerdo e mostra o menu no
+        // direito. GNOME/AppIndicator só entrega o menu: lá o clique abre o menu
+        // e o evento acima nunca dispara ("Mostrar painel" cobre esse caso).
         tray.setContextMenu(menu);
     } else {
-        tray.on('click', togglePopup);
         tray.on('right-click', () => tray.popUpContextMenu(menu));
     }
 
     createPopup();
     registerIpc();
     applyLoginItem();
+    applyWidgetSettings();
 
     service.on('update', (vm) => {
         lastViewModel = vm;
         updateTray();
         popup.webContents.send('state', vm);
+        widget?.webContents.send('state', vm);
     });
     service.on('threshold', (event) => {
         if (!Notification.isSupported())

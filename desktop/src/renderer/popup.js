@@ -92,6 +92,7 @@ function reportHeight() {
 }
 
 document.getElementById('refresh').addEventListener('click', () => window.aiUsage.refresh());
+document.getElementById('close').addEventListener('click', () => window.aiUsage.hidePopup());
 document.getElementById('prefs').addEventListener('click', () => window.aiUsage.openPreferences());
 document.addEventListener('keydown', (event) => {
     if (event.key === 'Escape')

@@ -5,8 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import zlib from 'node:zlib';
 
-import { renderTrayIcon, encodePng } from '../src/main/trayIcon.js';
-import { buildViewModel, indicatorText, thresholdNotificationText } from '../src/main/viewModel.js';
+import { renderTrayIcon, renderGaugeIcon, encodePng } from '../src/main/trayIcon.js';
+import { buildViewModel, indicatorText, trayReading, thresholdNotificationText } from '../src/main/viewModel.js';
 import { UsageService } from '../src/main/usageService.js';
 import { UsageProvider } from '../src/shared/providers/provider.js';
 
@@ -131,4 +131,28 @@ test('usageService: notificações desligadas não emitem threshold', async () =
     service.on('threshold', (e) => events.push(e));
     await service.refresh();
     assert.equal(events.length, 0);
+});
+
+test('trayIcon: velocímetro gera PNG válido; arco preenchido só quando há percentual', () => {
+    const { width, raw } = decodePng(renderGaugeIcon(80, 'high'));
+    assert.equal(width, 64);
+    const alphaAt = (png, x, y) => png.raw[y * (png.width * 4 + 1) + 1 + x * 4 + 3];
+    const full = decodePng(renderGaugeIcon(100, 'critical'));
+    assert.equal(alphaAt(full, 0, 0), 0);
+    assert.ok(alphaAt(full, 31, 6) > 0); // topo do arco
+    for (const [percent, state] of [[null, 'unknown'], [0, 'normal'], [100, 'critical']])
+        decodePng(renderGaugeIcon(percent, state));
+    assert.ok(raw.length > 0);
+});
+
+test('trayReading: IA escolhida, automático e escolhida sem dado', () => {
+    const vm = buildViewModel([
+        usage('claude', 'Claude', [{ id: 'a', label: 'A', percent: 40, unit: 'percentage', window: '5h', estimated: false }, { id: 'b', label: 'B', percent: 55, unit: 'percentage', window: 'week', estimated: false }]),
+        usage('codex', 'Codex', [{ id: 'w', label: 'W', percent: 91, unit: 'percentage', window: 'week', estimated: false }]),
+        usage('gemini', 'Antigravity', [], 'auth_required'),
+    ], NOW);
+    assert.deepEqual(trayReading(vm, 'auto'), { label: 'Codex', percent: 91, state: 'high' });
+    assert.deepEqual(trayReading(vm, 'claude'), { label: 'Claude', percent: 55, state: 'normal' });
+    assert.equal(trayReading(vm, 'gemini'), null);
+    assert.deepEqual(trayReading(vm, 'sumiu'), { label: 'Codex', percent: 91, state: 'high' });
 });

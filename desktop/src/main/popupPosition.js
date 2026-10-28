@@ -28,3 +28,24 @@ export function computePopupPosition(anchor, size, workArea) {
         y: Math.round(Math.max(workArea.y + MARGIN, Math.min(y, maxY))),
     };
 }
+
+/**
+ * Posição inicial do widget flutuante: a salva, se ainda estiver visível em
+ * algum monitor (o usuário pode ter desligado a tela onde ela estava);
+ * senão o canto inferior direito da área útil principal.
+ * @param {{x:number,y:number}|null} saved
+ * @param {{width:number,height:number}} size
+ * @param {{x:number,y:number,width:number,height:number}[]} workAreas
+ * @param {{x:number,y:number,width:number,height:number}} primary
+ */
+export function resolveWidgetPosition(saved, size, workAreas, primary) {
+    const visible = saved && workAreas.some((area) =>
+        saved.x + size.width > area.x + MARGIN && saved.x < area.x + area.width - MARGIN
+        && saved.y + size.height > area.y + MARGIN && saved.y < area.y + area.height - MARGIN);
+    if (visible)
+        return { x: Math.round(saved.x), y: Math.round(saved.y) };
+    return {
+        x: Math.round(primary.x + primary.width - size.width - 16),
+        y: Math.round(primary.y + primary.height - size.height - 16),
+    };
+}

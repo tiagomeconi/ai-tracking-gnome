@@ -1,0 +1,26 @@
+html, body { background: transparent; }
+body { overflow: hidden; user-select: none; cursor: grab; }
+body.dragging { cursor: grabbing; }
+
+#widget {
+    margin: 2px;
+    padding: 6px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.row { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+.row img { width: 18px; height: 18px; object-fit: contain; border-radius: 3px; }
+.row .name { flex: 1; font-size: 0.85em; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .percent { font-size: 0.85em; font-variant-numeric: tabular-nums; }
+.mini-bar { flex: 0 0 100%; height: 5px; border-radius: 3px; background: var(--track); overflow: hidden; }
+.mini-fill { height: 100%; border-radius: 3px; }
+.mini-fill.normal { background: var(--normal); }
+.mini-fill.attention { background: var(--attention); }
+.mini-fill.high { background: var(--high); }
+.mini-fill.critical { background: var(--critical); }
+.mini-fill.unknown { background: var(--unknown); }
+.row-wrap { padding: 3px 0; }
+.row-wrap .row { padding: 0 0 3px; }
+.empty { font-size: 0.8em; color: var(--muted); font-style: italic; }

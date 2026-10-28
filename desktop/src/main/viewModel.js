@@ -51,6 +51,7 @@ function buildProvider(usage, now) {
         stale: Boolean(usage.stale),
         message: null,
         windows: [],
+        peak: null,
         collapsed: false,
     };
 
@@ -59,9 +60,13 @@ function buildProvider(usage, now) {
     if (!usage.windows || usage.windows.length === 0)
         return { ...base, message: 'Consumo indisponível por integração suportada' };
 
+    const windows = usage.windows.map((w) => buildWindow(w, now));
+    const peak = windows.reduce((max, w) => (w.percent !== null && (max === null || w.percent > max.percent) ? w : max), null);
+
     return {
         ...base,
-        windows: usage.windows.map((w) => buildWindow(w, now)),
+        windows,
+        peak: peak ? { percent: Math.round(peak.percent), state: peak.state } : null,
         collapsed: usage.windows.length > COLLAPSE_WINDOWS_THRESHOLD,
     };
 }
@@ -86,6 +91,24 @@ export function buildViewModel(usages, now = new Date()) {
         providers: usages.map((u) => buildProvider(u, now)),
         lastUpdatedText: lastFetchedAt ? `Atualizado ${formatElapsed(lastFetchedAt, now)}` : 'Ainda não atualizado',
     };
+}
+
+/**
+ * Leitura exibida no ícone da bandeja: o provider escolhido nas preferências
+ * ou, em 'auto' (ou se o escolhido sumiu/está sem dado), o mais crítico.
+ * @returns {{label: string, percent: number, state: string}|null}
+ */
+export function trayReading(viewModel, providerId = 'auto') {
+    if (providerId !== 'auto') {
+        const provider = viewModel.providers.find((p) => p.id === providerId);
+        if (provider?.peak)
+            return { label: shortProviderName(provider.name), ...provider.peak };
+        if (provider)
+            return null; // escolhido, mas sem dado: ícone cinza em vez de outra IA
+    }
+    return viewModel.best
+        ? { label: viewModel.best.providerName, percent: viewModel.best.percent, state: viewModel.best.state }
+        : null;
 }
 
 /** Texto do indicador (tooltip/título): "Claude 85%" ou "—". */

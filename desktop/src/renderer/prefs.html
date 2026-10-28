@@ -21,6 +21,15 @@
         <p class="muted">Provedores desligados somem do ícone e do painel, e deixam de ser consultados.</p>
         <div id="providers"></div>
 
+        <h2>Ícone da bandeja</h2>
+        <label class="row"><span>IA exibida no ícone<small>"Automático" mostra a de maior consumo</small></span><select id="tray-provider"></select></label>
+        <label class="row"><span>Estilo do ícone</span><select id="tray-style"><option value="number">Círculo com número</option><option value="gauge">Velocímetro</option></select></label>
+
+        <h2>Widget flutuante</h2>
+        <p class="muted">Quadrado pequeno e translúcido que fica sobre os outros aplicativos. Arraste para qualquer canto; clique direito para o menu, duplo clique abre o painel.</p>
+        <label class="row"><span>Mostrar widget flutuante</span><input type="checkbox" id="widget-enabled"></label>
+        <label class="row"><span>Opacidade (%)</span><input type="range" id="widget-opacity" min="40" max="100" step="5"></label>
+
         <h2>Notificações</h2>
         <label class="row"><span>Avisar quando uma janela passar do limite</span><input type="checkbox" id="notif-enabled"></label>
         <label class="row"><span>Limite para avisar (%)</span><input type="number" id="notif-threshold" min="1" max="100" step="1"></label>

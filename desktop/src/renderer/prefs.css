@@ -7,6 +7,7 @@ nav button[aria-selected="true"] { background: var(--hover); font-weight: 700; }
 h2 { font-size: 1em; margin: 20px 0 4px; }
 .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .row small { display: block; color: var(--muted); }
+select { max-width: 55%; }
 input[type="number"], select { font: inherit; color: inherit; background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 4px 8px; }
 input[type="number"] { width: 5em; }
 input[type="checkbox"] { width: 18px; height: 18px; }
