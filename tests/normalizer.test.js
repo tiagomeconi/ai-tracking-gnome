@@ -148,3 +148,13 @@ test('computeBudgetProjection com 100% usado tem remainingPercent 0', () => {
     assert.equal(projection.remainingPercent, 0);
     assert.equal(projection.percentPerHour, 0);
 });
+
+test('pickWindow: janela escolhida, fallback para a de maior consumo e sem dado', async () => {
+    const { pickWindow } = await import('../extension/lib/normalizer.js');
+    const usage = { status: 'ok', windows: [{ id: '5h', percent: 20 }, { id: '7d', percent: 80 }] };
+    assert.equal(pickWindow(usage, '5h').percent, 20);
+    assert.equal(pickWindow(usage, 'auto').window.id, '7d');
+    assert.equal(pickWindow(usage, 'sumiu').window.id, '7d');
+    assert.equal(pickWindow({ status: 'error', windows: usage.windows }), undefined);
+    assert.equal(pickWindow({ status: 'ok', windows: [] }), undefined);
+});

@@ -29,6 +29,8 @@ summary { cursor: pointer; padding: 4px 0; color: var(--accent); }
 footer { display: flex; align-items: center; gap: 4px; padding: 6px 14px; border-top: 1px solid var(--border); }
 footer .logo { width: 24px; height: 24px; margin-right: 4px; }
 footer .spacer { flex: 1; }
-footer button { font-size: 1.1em; -webkit-app-region: no-drag; }
-footer { -webkit-app-region: drag; user-select: none; }
+footer button { font-size: 1.1em; }
+body { user-select: none; cursor: grab; }
+body.dragging { cursor: grabbing; }
+button, summary { cursor: pointer; }
 .loading, .empty { padding: 8px 14px; font-style: italic; color: var(--muted); margin: 0; }

@@ -125,3 +125,25 @@ export function selectMostCritical(providers) {
 
     return best;
 }
+
+/**
+ * Janela exibida nos resumos compactos (widget flutuante): a janela de id
+ * `windowId`, se existir; senão (ou em 'auto') a de maior consumo do provider.
+ * Providers sem dado utilizável retornam undefined.
+ */
+export function pickWindow(usage, windowId = 'auto') {
+    if (!['ok', 'warning', 'critical'].includes(usage.status))
+        return undefined;
+
+    let best;
+    for (const w of usage.windows ?? []) {
+        const percent = computePercent(w);
+        if (typeof percent !== 'number')
+            continue;
+        if (windowId !== 'auto' && w.id === windowId)
+            return { window: w, percent };
+        if (!best || percent > best.percent)
+            best = { window: w, percent };
+    }
+    return best;
+}

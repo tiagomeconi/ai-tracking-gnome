@@ -156,3 +156,20 @@ test('trayReading: IA escolhida, automático e escolhida sem dado', () => {
     assert.equal(trayReading(vm, 'gemini'), null);
     assert.deepEqual(trayReading(vm, 'sumiu'), { label: 'Codex', percent: 91, state: 'high' });
 });
+
+test('viewModel: widget usa a janela escolhida (ou a de maior consumo) e traz o reset', () => {
+    const windows = [
+        { id: '5h', label: '5 horas', percent: 40, unit: 'percentage', window: '5h', estimated: false, resetsAt: '2026-01-01T14:00:00Z' },
+        { id: '7d', label: '7 dias', percent: 99, unit: 'percentage', window: 'week', estimated: false, resetsAt: '2026-01-04T12:00:00Z' },
+    ];
+    const auto = buildViewModel([usage('claude', 'Claude', windows)], NOW).providers[0];
+    assert.equal(auto.widget.label, '7 dias');
+    assert.equal(auto.widget.percent, 99);
+    assert.match(auto.widget.resetText, /^renova em 3 d/);
+
+    const chosen = buildViewModel([usage('claude', 'Claude', windows)], NOW, { claude: '5h' }).providers[0];
+    assert.equal(chosen.widget.percent, 40);
+    assert.equal(chosen.widget.resetText, 'renova em 2 h');
+    assert.equal(buildViewModel([usage('claude', 'Claude', windows)], NOW, { claude: 'sumiu' }).providers[0].widget.percent, 99);
+    assert.equal(buildViewModel([usage('x', 'X', [], 'error')], NOW).providers[0].widget, null);
+});

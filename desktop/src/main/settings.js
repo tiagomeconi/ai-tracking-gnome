@@ -17,6 +17,7 @@ export const DEFAULT_SETTINGS = Object.freeze({
     widgetEnabled: false,
     widgetOpacity: 90,
     widgetPosition: null,
+    widgetWindows: {},
 });
 
 export const TRAY_STYLES = ['number', 'gauge'];
@@ -46,6 +47,9 @@ export function sanitizeSettings(raw) {
         widgetOpacity: Number.isFinite(Number(input.widgetOpacity))
             ? Math.min(100, Math.max(40, Math.round(Number(input.widgetOpacity))))
             : DEFAULT_SETTINGS.widgetOpacity,
+        widgetWindows: input.widgetWindows && typeof input.widgetWindows === 'object' && !Array.isArray(input.widgetWindows)
+            ? Object.fromEntries(Object.entries(input.widgetWindows).filter(([k, v]) => typeof k === 'string' && typeof v === 'string'))
+            : {},
         widgetPosition: Number.isFinite(input.widgetPosition?.x) && Number.isFinite(input.widgetPosition?.y)
             ? { x: Math.round(input.widgetPosition.x), y: Math.round(input.widgetPosition.y) }
             : null,
@@ -59,7 +63,7 @@ export class SettingsStore {
     }
 
     get() {
-        return { ...this._settings, disabledProviders: [...this._settings.disabledProviders] };
+        return { ...this._settings, disabledProviders: [...this._settings.disabledProviders], widgetWindows: { ...this._settings.widgetWindows } };
     }
 
     /** Mescla `patch` nas preferências atuais, persiste e retorna o resultado. */

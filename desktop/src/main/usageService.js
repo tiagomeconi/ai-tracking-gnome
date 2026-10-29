@@ -95,7 +95,7 @@ export class UsageService extends EventEmitter {
     }
 
     getViewModel(now = new Date()) {
-        return buildViewModel(this._currentUsages(), now);
+        return buildViewModel(this._currentUsages(), now, this._settings.get().widgetWindows ?? {});
     }
 
     /** URLs "gerenciar" conhecidas — allowlist para `shell.openExternal`. */

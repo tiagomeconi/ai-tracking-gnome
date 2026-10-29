@@ -19,18 +19,22 @@ function renderProvider(p) {
     icon.src = `../../assets/icons/${encodeURIComponent(p.id)}.png`;
     icon.alt = '';
     icon.addEventListener('error', () => icon.remove());
-    row.append(icon, el('span', 'name', p.name.replace(/\s*\(.*\)$/, '')), el('span', 'percent', p.peak ? `${p.peak.percent}%` : '—'));
+    row.append(icon, el('span', 'name', p.name.replace(/\s*\(.*\)$/, '')), el('span', 'percent', p.widget ? `${p.widget.percent}%` : '—'));
 
     const bar = el('div', 'mini-bar');
     bar.setAttribute('role', 'progressbar');
-    bar.setAttribute('aria-label', `${p.name}: ${p.peak ? `${p.peak.percent}%` : 'sem dados'}`);
-    const fill = el('div', `mini-fill ${p.peak?.state ?? 'unknown'}`);
-    fill.style.width = `${p.peak?.percent ?? 0}%`;
+    bar.setAttribute('aria-label', `${p.name}${p.widget ? ` — ${p.widget.label}` : ''}: ${p.widget ? `${p.widget.percent}%` : 'sem dados'}`);
+    const fill = el('div', `mini-fill ${p.widget?.state ?? 'unknown'}`);
+    fill.style.width = `${p.widget?.percent ?? 0}%`;
     bar.append(fill);
 
     wrap.append(row, bar);
-    if (p.message)
+    if (p.widget) {
+        const detail = [p.widget.label, p.widget.resetText].filter(Boolean).join(' · ');
+        wrap.append(el('div', 'detail', detail));
+    } else if (p.message) {
         wrap.title = p.message;
+    }
     return wrap;
 }
 
@@ -39,29 +43,7 @@ function render(vm) {
     requestAnimationFrame(() => requestAnimationFrame(() => window.aiUsage.reportWidgetHeight(root.offsetHeight + 4)));
 }
 
-// Arraste manual com deltas de tela.
-let drag = null;
-document.addEventListener('pointerdown', (event) => {
-    if (event.button !== 0)
-        return;
-    drag = { x: event.screenX, y: event.screenY };
-    document.body.classList.add('dragging');
-    document.body.setPointerCapture(event.pointerId);
-    window.aiUsage.widgetDragStart();
-});
-document.addEventListener('pointermove', (event) => {
-    if (drag)
-        window.aiUsage.widgetDragMove(event.screenX - drag.x, event.screenY - drag.y);
-});
-function endDrag() {
-    if (!drag)
-        return;
-    drag = null;
-    document.body.classList.remove('dragging');
-    window.aiUsage.widgetDragEnd();
-}
-document.addEventListener('pointerup', endDrag);
-document.addEventListener('pointercancel', endDrag);
+// O arraste fica em drag.js; aqui só menu de contexto e duplo clique.
 document.addEventListener('contextmenu', (event) => {
     event.preventDefault();
     window.aiUsage.widgetMenu();

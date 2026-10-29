@@ -183,6 +183,23 @@ Click the indicator in the top bar to open the popup:
   triggers them, and open the **Statistics** tab (a daily usage chart per
   provider/window, built from history saved locally).
 
+### Display options (GNOME and desktop app)
+
+In **Preferences** (both the extension and the tray app):
+
+- **Which AI the indicator shows** — "Automatic" (closest to its limit) or a
+  specific provider — and its **style** (logo/number or a half-circle gauge).
+- **Floating widget** (off by default) — a compact, translucent card kept on
+  top of other windows, one row per AI with the usage bar and *when it
+  renews*. Drag it anywhere (the position is remembered; double-click opens
+  the full panel) and choose, per AI, which window it shows (e.g. 5-hour or
+  weekly). Opacity is adjustable. On GNOME the popup from the top bar stays
+  as is — the widget is an extra.
+- Tray app only: the full panel can be dragged by clicking anywhere on it.
+
+After updating the GNOME extension, restart the Shell (log out/in on
+Wayland) so the new code and settings schema are loaded.
+
 ## Troubleshooting
 
 - **Indicator doesn't show up after enabling** — GNOME Shell only reloads

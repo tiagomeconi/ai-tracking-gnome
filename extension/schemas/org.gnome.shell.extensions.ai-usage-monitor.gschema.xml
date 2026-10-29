@@ -30,5 +30,62 @@
         visuais de cor da barra (atenção/alto/crítico).
       </description>
     </key>
+    <key name="panel-provider" type="s">
+      <default>'auto'</default>
+      <summary>IA exibida na barra superior</summary>
+      <description>
+        "auto" mostra a IA mais próxima do limite; ou um providerId
+        (ex.: "claude") para fixar uma IA específica no indicador.
+      </description>
+    </key>
+    <key name="panel-style" type="s">
+      <choices>
+        <choice value="text"/>
+        <choice value="gauge"/>
+      </choices>
+      <default>'text'</default>
+      <summary>Estilo do indicador</summary>
+      <description>
+        "text" mostra o logo; "gauge" troca o logo por um velocímetro
+        (meia-lua) colorido pelo estado, ao lado do texto.
+      </description>
+    </key>
+    <key name="widget-enabled" type="b">
+      <default>false</default>
+      <summary>Widget flutuante</summary>
+      <description>
+        Mostra um quadrado compacto e translúcido, arrastável, sempre sobre
+        as outras janelas, com o resumo de uso de cada IA.
+      </description>
+    </key>
+    <key name="widget-opacity" type="i">
+      <range min="40" max="100"/>
+      <default>90</default>
+      <summary>Opacidade do widget (%)</summary>
+    </key>
+    <key name="widget-x" type="i">
+      <default>-1</default>
+      <summary>Posição X do widget (-1 = canto padrão)</summary>
+    </key>
+    <key name="widget-y" type="i">
+      <default>-1</default>
+      <summary>Posição Y do widget (-1 = canto padrão)</summary>
+    </key>
+    <key name="widget-windows" type="a{ss}">
+      <default>{}</default>
+      <summary>Janela exibida no widget, por IA</summary>
+      <description>
+        Mapa providerId -> id da janela de uso mostrada no widget. Ausente
+        ou "auto" mostra a janela de maior consumo.
+      </description>
+    </key>
+    <key name="known-windows" type="s">
+      <default>'{}'</default>
+      <summary>Janelas conhecidas (uso interno)</summary>
+      <description>
+        JSON providerId -> [{id,label}], gravado pela extensão a cada
+        atualização para a janela de preferências listar as opções.
+      </description>
+    </key>
   </schema>
 </schemalist>

@@ -3,7 +3,7 @@
 // só dados e textos prontos (pt-BR, como a extensão). Mantém regra de
 // negócio fora do renderer, que apenas desenha.
 
-import { computePercent, visualStateFromPercent, computeBudgetProjection, selectMostCritical } from '../shared/normalizer.js';
+import { computePercent, visualStateFromPercent, computeBudgetProjection, selectMostCritical, pickWindow } from '../shared/normalizer.js';
 import { formatRemaining, formatElapsed, formatUsedWithUnit, formatBudgetProjection, shortProviderName, mostRecentFetchedAt, providerStatusMessage } from '../shared/format.js';
 
 // RF-03: o estado nunca é comunicado só pela cor — sempre há uma palavra.
@@ -33,6 +33,7 @@ function buildWindow(window, now) {
     const budget = projection && projection.remainingPercent > 0 ? formatBudgetProjection(projection) : null;
 
     return {
+        id: window.id,
         label: window.label,
         text: `${window.label} — ${percentText}`,
         percent: typeof percent === 'number' ? percent : null,
@@ -42,7 +43,12 @@ function buildWindow(window, now) {
     };
 }
 
-function buildProvider(usage, now) {
+// "Renova em 2 h" -> "renova em 2 h" (curto, para o widget).
+function formatResetShort(resetText) {
+    return resetText ? resetText.replace(/^Renova/, 'renova') : null;
+}
+
+function buildProvider(usage, now, widgetWindowId = 'auto') {
     const base = {
         id: usage.providerId,
         name: usage.providerName,
@@ -52,6 +58,7 @@ function buildProvider(usage, now) {
         message: null,
         windows: [],
         peak: null,
+        widget: null,
         collapsed: false,
     };
 
@@ -63,9 +70,16 @@ function buildProvider(usage, now) {
     const windows = usage.windows.map((w) => buildWindow(w, now));
     const peak = windows.reduce((max, w) => (w.percent !== null && (max === null || w.percent > max.percent) ? w : max), null);
 
+    // Janela mostrada no widget flutuante: a escolhida nas preferências ou a de maior consumo.
+    const picked = pickWindow(usage, widgetWindowId);
+    const pickedView = picked ? windows[usage.windows.indexOf(picked.window)] : null;
+
     return {
         ...base,
         windows,
+        widget: pickedView
+            ? { label: pickedView.label, percent: Math.round(pickedView.percent), state: pickedView.state, resetText: formatResetShort(pickedView.resetText) }
+            : null,
         peak: peak ? { percent: Math.round(peak.percent), state: peak.state } : null,
         collapsed: usage.windows.length > COLLAPSE_WINDOWS_THRESHOLD,
     };
@@ -75,7 +89,7 @@ function buildProvider(usage, now) {
  * @param {import('../shared/types.js').AIProviderUsage[]} usages - já filtrados pelos providers habilitados.
  * @param {Date} [now]
  */
-export function buildViewModel(usages, now = new Date()) {
+export function buildViewModel(usages, now = new Date(), widgetWindows = {}) {
     const best = selectMostCritical(usages);
     const lastFetchedAt = mostRecentFetchedAt(usages);
 
@@ -88,7 +102,7 @@ export function buildViewModel(usages, now = new Date()) {
                 state: visualStateFromPercent(best.percent),
             }
             : null,
-        providers: usages.map((u) => buildProvider(u, now)),
+        providers: usages.map((u) => buildProvider(u, now, widgetWindows[u.providerId] ?? 'auto')),
         lastUpdatedText: lastFetchedAt ? `Atualizado ${formatElapsed(lastFetchedAt, now)}` : 'Ainda não atualizado',
     };
 }

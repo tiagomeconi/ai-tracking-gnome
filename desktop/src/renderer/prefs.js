@@ -48,6 +48,33 @@ function renderProviders(providers) {
     }));
 }
 
+// Para cada provider, qual janela o widget mostra ("auto" = a de maior consumo).
+function renderWidgetWindows(providers, windows) {
+    $('widget-windows').replaceChildren(...providers.map((provider) => {
+        const label = document.createElement('label');
+        label.className = 'row';
+        const text = document.createElement('span');
+        text.textContent = `Widget — ${provider.name}`;
+
+        const select = document.createElement('select');
+        const options = [{ id: 'auto', label: 'Automático (maior consumo)' }, ...(windows[provider.id] ?? [])];
+        const saved = settings.widgetWindows[provider.id];
+        if (saved && !options.some((o) => o.id === saved))
+            options.push({ id: saved, label: saved });
+        select.replaceChildren(...options.map((o) => {
+            const option = document.createElement('option');
+            option.value = o.id;
+            option.textContent = o.label;
+            return option;
+        }));
+        select.value = saved ?? 'auto';
+        select.addEventListener('change', () => save({ widgetWindows: { ...settings.widgetWindows, [provider.id]: select.value } }));
+
+        label.append(text, select);
+        return label;
+    }));
+}
+
 async function init() {
     const data = await api.getSettings();
     settings = data.settings;
@@ -66,6 +93,7 @@ async function init() {
     $('tray-style').value = settings.trayStyle;
     $('tray-style').addEventListener('change', (event) => save({ trayStyle: event.target.value }));
 
+    renderWidgetWindows(data.providers, data.windows);
     $('widget-enabled').checked = settings.widgetEnabled;
     $('widget-opacity').value = settings.widgetOpacity;
     $('widget-opacity').disabled = !settings.widgetEnabled;

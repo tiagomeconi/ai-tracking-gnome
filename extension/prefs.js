@@ -108,6 +108,8 @@ export default class AIUsageMonitorPreferences extends ExtensionPreferences {
             });
         }
 
+        this._fillDisplayGroups(page, settings);
+
         const notificationsGroup = new Adw.PreferencesGroup({
             title: 'Notificações',
         });
@@ -145,6 +147,86 @@ export default class AIUsageMonitorPreferences extends ExtensionPreferences {
         });
 
         this._fillStatsPage(window);
+    }
+
+    /**
+     * Opções de exibição: qual IA/estilo aparece na barra e o widget
+     * flutuante opcional (com a janela de uso mostrada por IA).
+     */
+    _fillDisplayGroups(page, settings) {
+        const panelGroup = new Adw.PreferencesGroup({
+            title: 'Indicador da barra',
+            description: 'Qual IA aparece na barra superior e em que estilo.',
+        });
+        page.add(panelGroup);
+
+        const providerChoices = [{ id: 'auto', name: 'Automático (mais próxima do limite)' }, ...PROVIDERS];
+        const providerRow = new Adw.ComboRow({
+            title: 'IA exibida na barra',
+            model: Gtk.StringList.new(providerChoices.map((p) => p.name)),
+        });
+        providerRow.selected = Math.max(0, providerChoices.findIndex((p) => p.id === settings.get_string('panel-provider')));
+        providerRow.connect('notify::selected', () => settings.set_string('panel-provider', providerChoices[providerRow.selected].id));
+        panelGroup.add(providerRow);
+
+        const styleChoices = [{ id: 'text', name: 'Logo + texto' }, { id: 'gauge', name: 'Velocímetro + texto' }];
+        const styleRow = new Adw.ComboRow({
+            title: 'Estilo do indicador',
+            model: Gtk.StringList.new(styleChoices.map((s) => s.name)),
+        });
+        styleRow.selected = Math.max(0, styleChoices.findIndex((s) => s.id === settings.get_string('panel-style')));
+        styleRow.connect('notify::selected', () => settings.set_string('panel-style', styleChoices[styleRow.selected].id));
+        panelGroup.add(styleRow);
+
+        const widgetGroup = new Adw.PreferencesGroup({
+            title: 'Widget flutuante',
+            description: 'Quadrado compacto e translúcido, sempre sobre as janelas. Arraste para qualquer canto; duplo clique abre o painel completo.',
+        });
+        page.add(widgetGroup);
+
+        const widgetRow = new Adw.ActionRow({ title: 'Mostrar widget flutuante' });
+        const widgetSwitch = new Gtk.Switch({ active: settings.get_boolean('widget-enabled'), valign: Gtk.Align.CENTER });
+        widgetRow.add_suffix(widgetSwitch);
+        widgetRow.activatable_widget = widgetSwitch;
+        widgetGroup.add(widgetRow);
+        widgetSwitch.connect('notify::active', () => settings.set_boolean('widget-enabled', widgetSwitch.active));
+
+        const opacityRow = new Adw.ActionRow({ title: 'Opacidade (%)' });
+        const opacitySpin = Gtk.SpinButton.new_with_range(40, 100, 5);
+        opacitySpin.value = settings.get_int('widget-opacity');
+        opacitySpin.valign = Gtk.Align.CENTER;
+        opacityRow.add_suffix(opacitySpin);
+        opacityRow.activatable_widget = opacitySpin;
+        widgetGroup.add(opacityRow);
+        opacitySpin.connect('value-changed', () => settings.set_int('widget-opacity', opacitySpin.get_value_as_int()));
+
+        // Janelas conhecidas vêm da extensão (indicator.js) via GSettings.
+        let known = {};
+        try {
+            known = JSON.parse(settings.get_string('known-windows'));
+        } catch (_e) {
+            known = {};
+        }
+
+        for (const provider of PROVIDERS) {
+            const choices = [{ id: 'auto', label: 'Automático (maior consumo)' }, ...(known[provider.id] ?? [])];
+            const saved = settings.get_value('widget-windows').deepUnpack()[provider.id];
+            if (saved && saved !== 'auto' && !choices.some((c) => c.id === saved))
+                choices.push({ id: saved, label: saved });
+
+            const row = new Adw.ComboRow({
+                title: `Widget — ${provider.name}`,
+                subtitle: 'Janela de uso mostrada (e quando renova)',
+                model: Gtk.StringList.new(choices.map((c) => c.label)),
+            });
+            row.selected = Math.max(0, choices.findIndex((c) => c.id === (saved ?? 'auto')));
+            row.connect('notify::selected', () => {
+                const current = settings.get_value('widget-windows').deepUnpack();
+                current[provider.id] = choices[row.selected].id;
+                settings.set_value('widget-windows', new GLib.Variant('a{ss}', current));
+            });
+            widgetGroup.add(row);
+        }
     }
 
     /**

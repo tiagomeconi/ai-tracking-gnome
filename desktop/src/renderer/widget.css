@@ -23,4 +23,5 @@ body.dragging { cursor: grabbing; }
 .mini-fill.unknown { background: var(--unknown); }
 .row-wrap { padding: 3px 0; }
 .row-wrap .row { padding: 0 0 3px; }
+.detail { margin-top: 2px; font-size: 0.72em; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .empty { font-size: 0.8em; color: var(--muted); font-style: italic; }

@@ -72,13 +72,15 @@ All in Preferences → General:
   closest to its limit, or a specific provider; a provider without data shows
   a grey icon) and its style: *circle with number* (default) or *gauge*
   (half-circle speedometer with the number below).
-- **Panel** — drag it by the bottom bar to move it; once moved it stays put
+- **Panel** — drag it from anywhere (except buttons) to move it; once moved it stays put
   (it no longer hides when losing focus) until closed with ✕, `Esc` or a
   click on the tray icon.
 - **Floating widget** (off by default) — a small translucent always-on-top
   square with one row per provider (peak usage + bar). Drag it anywhere; the
   position is remembered. Right-click for a menu, double-click opens the full
-  panel. Opacity is adjustable (40–100%). It can also be toggled from the
+  panel. Opacity is adjustable (40–100%), and for each provider you choose
+  which usage window it shows (e.g. 5-hour or weekly) — it also shows when
+  that window renews. It can also be toggled from the
   tray menu ("Alternar widget flutuante").
 
 ## Status / not yet validated

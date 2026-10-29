@@ -61,11 +61,10 @@ let popup = null;
 let prefsWindow = null;
 let widget = null;
 let widgetHeight = WIDGET_MIN_HEIGHT;
-let widgetDragOrigin = null;
+let dragState = null;
 let popupHeight = POPUP_MIN_HEIGHT;
-// Popup arrastado pelo usuário: fica fixo (não some ao perder o foco) até ser fechado.
+// Popup arrastado pelo usuário (ver 'drag-move'): fica fixo (não some ao perder o foco) até ser fechado.
 let popupPinned = false;
-let lastProgrammaticMove = 0;
 let lastBlurHide = 0;
 let lastViewModel = service.getViewModel();
 
@@ -105,11 +104,6 @@ function createPopup() {
             return;
         lastBlurHide = Date.now();
         popup.hide();
-    });
-    // Arrastar o painel (pela barra inferior) o fixa onde foi solto.
-    popup.on('move', () => {
-        if (popup.isVisible() && Date.now() - lastProgrammaticMove > 250)
-            popupPinned = true;
     });
     popup.on('hide', () => {
         popupPinned = false;
@@ -178,7 +172,6 @@ function positionPopup() {
     }
     const display = screen.getDisplayNearestPoint({ x: anchor.x, y: anchor.y });
     const { x, y } = computePopupPosition(anchor, { width: POPUP_WIDTH, height: popupHeight }, display.workArea);
-    lastProgrammaticMove = Date.now();
     popup.setBounds({ x, y, width: POPUP_WIDTH, height: popupHeight });
 }
 
@@ -247,26 +240,36 @@ function registerIpc() {
             togglePopup();
     });
 
-    ipcMain.on('widget-drag-start', () => {
-        widgetDragOrigin = widget ? widget.getPosition() : null;
+    // Arraste manual: setBounds com largura/altura fixas (setPosition em telas
+    // com escala fracionária do Windows faz a janela crescer a cada movimento).
+    ipcMain.on('drag-start', (event) => {
+        const win = BrowserWindow.fromWebContents(event.sender);
+        dragState = win ? { win, bounds: win.getBounds() } : null;
     });
-    ipcMain.on('widget-drag-move', (_event, dx, dy) => {
-        if (!widget || !widgetDragOrigin || !Number.isFinite(dx) || !Number.isFinite(dy))
+    ipcMain.on('drag-move', (_event, dx, dy) => {
+        if (!dragState || dragState.win.isDestroyed() || !Number.isFinite(dx) || !Number.isFinite(dy))
             return;
-        widget.setPosition(Math.round(widgetDragOrigin[0] + dx), Math.round(widgetDragOrigin[1] + dy));
+        const { win, bounds } = dragState;
+        if (win === popup && (dx !== 0 || dy !== 0))
+            popupPinned = true; // clique simples não fixa; arrastar sim
+        win.setBounds({ x: Math.round(bounds.x + dx), y: Math.round(bounds.y + dy), width: bounds.width, height: bounds.height });
     });
-    ipcMain.on('widget-drag-end', () => {
-        if (widget && widgetDragOrigin) {
-            const [x, y] = widget.getPosition();
+    ipcMain.on('drag-end', () => {
+        if (dragState && dragState.win === widget && !widget.isDestroyed()) {
+            const { x, y } = widget.getBounds();
             settings.update({ widgetPosition: { x, y } });
         }
-        widgetDragOrigin = null;
+        dragState = null;
     });
     ipcMain.on('widget-height', (_event, height) => {
         if (!Number.isFinite(height) || !widget)
             return;
-        widgetHeight = Math.round(Math.min(Math.max(height, WIDGET_MIN_HEIGHT), 600));
-        widget.setSize(WIDGET_WIDTH, widgetHeight);
+        const next = Math.round(Math.min(Math.max(height, WIDGET_MIN_HEIGHT), 600));
+        if (next === widgetHeight)
+            return;
+        widgetHeight = next;
+        const { x, y } = widget.getBounds();
+        widget.setBounds({ x, y, width: WIDGET_WIDTH, height: widgetHeight });
     });
     ipcMain.on('widget-menu', () => {
         Menu.buildFromTemplate([
@@ -282,8 +285,10 @@ function registerIpc() {
             return;
         const workArea = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea;
         popupHeight = Math.round(Math.min(Math.max(height, POPUP_MIN_HEIGHT), workArea.height - 16));
-        if (popup.isVisible())
+        if (popup.isVisible() && !popupPinned)
             positionPopup();
+        else if (popup.isVisible())
+            popup.setBounds({ ...popup.getBounds(), width: POPUP_WIDTH, height: popupHeight });
         else
             popup.setSize(POPUP_WIDTH, popupHeight);
     });
@@ -297,9 +302,11 @@ function registerIpc() {
         settings: settings.get(),
         providers: PROVIDER_CHOICES,
         canLaunchAtLogin: process.platform !== 'linux',
+        // Janelas conhecidas de cada provider (para escolher a do widget).
+        windows: Object.fromEntries(lastViewModel.providers.map((p) => [p.id, p.windows.map((w) => ({ id: w.id, label: w.label }))])),
     }));
     ipcMain.handle('settings:update', (_event, patch) => {
-        const allowed = ['disabledProviders', 'notificationsEnabled', 'notificationThresholdPercent', 'launchAtLogin', 'trayProvider', 'trayStyle', 'widgetEnabled', 'widgetOpacity'];
+        const allowed = ['disabledProviders', 'notificationsEnabled', 'notificationThresholdPercent', 'launchAtLogin', 'trayProvider', 'trayStyle', 'widgetEnabled', 'widgetOpacity', 'widgetWindows'];
         const safePatch = Object.fromEntries(Object.entries(patch ?? {}).filter(([key]) => allowed.includes(key)));
         const next = settings.update(safePatch);
         applyLoginItem();
