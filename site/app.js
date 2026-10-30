@@ -192,10 +192,10 @@
             svg = `<svg viewBox="0 0 32 32"><path d="M5 22 A11 11 0 0 1 27 22" fill="none" stroke="${track}" stroke-width="4.2" stroke-linecap="round"/>
                 <path d="M5 22 A11 11 0 0 1 27 22" fill="none" stroke="${c}" stroke-width="4.2" stroke-linecap="round" stroke-dasharray="${L} ${L}" stroke-dashoffset="${L * (1 - p / 100)}"/>
                 <line x1="16" y1="22" x2="${nx.toFixed(2)}" y2="${ny.toFixed(2)}" stroke="${ink}" stroke-width="1.6" stroke-linecap="round"/>
-                <text x="16" y="31" text-anchor="middle" font-size="8.5" font-weight="800" fill="${ink}" font-family="Inter,sans-serif">${Math.min(99, p)}</text></svg>`;
+                <text x="16" y="31" text-anchor="middle" font-size="8.5" font-weight="800" fill="${ink}" font-family="SF Pro Display,Geist,sans-serif">${Math.min(99, p)}</text></svg>`;
         } else {
             svg = `<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${c}"/>
-                <text x="16" y="21" text-anchor="middle" font-size="14" font-weight="800" fill="${s === 'warn' ? '#1d1738' : '#fff'}" font-family="Inter,sans-serif">${Math.min(99, p)}</text></svg>`;
+                <text x="16" y="21" text-anchor="middle" font-size="14" font-weight="800" fill="${s === 'warn' ? '#1d1738' : '#fff'}" font-family="SF Pro Display,Geist,sans-serif">${Math.min(99, p)}</text></svg>`;
         }
         $('#tray-icon').innerHTML = svg;
     }
