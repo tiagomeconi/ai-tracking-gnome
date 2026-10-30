@@ -249,7 +249,9 @@ input[type='range']::-webkit-slider-thumb { -webkit-appearance: none; width: 22p
 input[type='range']::-webkit-slider-thumb:hover { transform: scale(1.15); }
 input[type='range']::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: #fff; border: 4px solid var(--accent); }
 .seg { display: flex; flex-wrap: wrap; gap: 6px; padding: 5px; border-radius: 999px; background: var(--glass); border: 1px solid var(--border); width: fit-content; max-width: 100%; }
-.seg button { border: 0; background: none; color: var(--muted); font: 600 0.85rem var(--sans); padding: 8px 14px; border-radius: 999px; cursor: pointer; transition: background 0.2s, color 0.2s; }
+.seg.seg-grid { display: grid; grid-template-columns: repeat(2, 1fr); border-radius: 22px; width: 100%; }
+.seg.seg-row { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; width: 100%; }
+.seg button { border: 0; background: none; color: var(--muted); font: 600 0.85rem var(--sans); padding: 9px 12px; border-radius: 999px; cursor: pointer; text-align: center; white-space: nowrap; transition: background 0.2s, color 0.2s; }
 .seg button[aria-checked='true'] { background: var(--accent); color: #fff; }
 .hint { margin: 6px 0 0; }
 
