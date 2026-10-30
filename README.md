@@ -387,6 +387,7 @@ ai-tracking-gnome/
 │   ├── src/renderer/   panel · widget · preferences UI
 │   └── scripts/        sync-shared · screenshots
 ├── tests/              extension unit tests
+├── site/               landing page (static HTML/CSS/JS, deployed via GitHub Pages)
 ├── docs/               ADRs, provider research, screenshots, banner
 └── scripts/            install / uninstall for the extension
 ```
