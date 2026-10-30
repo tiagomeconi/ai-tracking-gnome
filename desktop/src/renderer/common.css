@@ -51,3 +51,8 @@ button:hover { background: var(--hover); }
 button:focus-visible, summary:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 
 .muted { color: var(--muted); font-size: 0.85em; }
+
+/* O ícone do Codex é branco: sem fundo some no tema claro. */
+@media (prefers-color-scheme: light) {
+    img[src$="/codex.png"] { background: #2a2a2e; border-radius: 6px; }
+}

@@ -10,6 +10,7 @@
     "license": "MIT",
     "scripts": {
         "sync-shared": "node scripts/sync-shared.mjs",
+        "screenshots": "npm run sync-shared && electron scripts/screenshots.mjs",
         "prestart": "npm run sync-shared",
         "start": "electron .",
         "pretest": "npm run sync-shared",
