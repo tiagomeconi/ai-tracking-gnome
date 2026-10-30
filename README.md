@@ -181,17 +181,17 @@ tracks and when it renews.
 
 Colored by state, with a color-independent number so it's readable at a glance.
 
-<img src="docs/screenshots/desktop-tray-icons.png" alt="Gauge and number tray icons at 12%, 58%, 78%, 91% and 98%" width="560">
+<picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/desktop-tray-icons-dark.png"><img src="docs/screenshots/desktop-tray-icons-light.png" alt="Gauge and number tray icons at 12%, 58%, 78%, 91% and 98%" width="560"></picture>
 
 ### Preferences and statistics
 
 <table>
 <tr>
-<td><img src="docs/screenshots/desktop-prefs.png" alt="Preferences: providers and tray icon"></td>
-<td><img src="docs/screenshots/desktop-prefs-widget.png" alt="Preferences: floating widget, notifications and system"></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/desktop-prefs-dark.png"><img src="docs/screenshots/desktop-prefs-light.png" alt="Preferences: providers and tray icon"></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/desktop-prefs-widget-dark.png"><img src="docs/screenshots/desktop-prefs-widget-light.png" alt="Preferences: floating widget, notifications and system"></picture></td>
 </tr>
 <tr>
-<td colspan="2" align="center"><img src="docs/screenshots/desktop-stats.png" alt="Statistics: daily peak usage per provider and window" width="560"></td>
+<td colspan="2" align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/desktop-stats-dark.png"><img src="docs/screenshots/desktop-stats-light.png" alt="Statistics: daily peak usage per provider and window" width="560"></picture></td>
 </tr>
 </table>
 

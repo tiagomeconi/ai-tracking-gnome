@@ -12,6 +12,7 @@
     --accent-2: #22d3ee;
     --accent-soft: rgba(139, 92, 246, 0.18);
     --shadow: 0 30px 80px -30px rgba(0, 0, 0, 0.7);
+    --glass-hl: inset 0 1px 0 rgba(255, 255, 255, 0.07);
     --ok: #3a9c3a;
     --warn: #d0a020;
     --hi: #d97706;
@@ -29,24 +30,28 @@
 }
 
 [data-theme='light'] {
-    --bg: #f6f3ff;
+    --bg: #efe9ff;
     --bg-2: #ffffff;
-    --fg: #1d1738;
-    --muted: #6a6390;
-    --glass: rgba(255, 255, 255, 0.66);
-    --glass-strong: rgba(255, 255, 255, 0.9);
-    --border: rgba(76, 56, 160, 0.16);
+    --fg: #1b1535;
+    --muted: #574f80;
+    --fg-dim: rgba(27, 21, 53, 0.46);
+    --glass: rgba(255, 255, 255, 0.56);
+    --glass-strong: rgba(255, 255, 255, 0.82);
+    --glass-hl: inset 0 1px 0 rgba(255, 255, 255, 0.95), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+    --border: rgba(110, 70, 220, 0.16);
     --accent: #7c3aed;
     --accent-2: #0891b2;
-    --accent-soft: rgba(124, 58, 237, 0.12);
-    --shadow: 0 30px 70px -34px rgba(76, 56, 160, 0.35);
-    --fg-dim: rgba(29, 23, 56, 0.48);
-    --blob-op: 0.5;
-    --blob-a: #c4b5fd;
-    --blob-b: #a5f3fc;
-    --blob-c: #fbcfe8;
+    --accent-soft: rgba(124, 58, 237, 0.13);
+    --shadow: 0 36px 80px -30px rgba(109, 40, 217, 0.42), 0 10px 28px -14px rgba(30, 20, 80, 0.16);
+    --blob-op: 0.62;
+    --blob-a: #8b5cf6;
+    --blob-b: #22d3ee;
+    --blob-c: #f472b6;
     color-scheme: light;
 }
+[data-theme='light'] body { background: linear-gradient(180deg, #f6f1ff 0%, #e9f2ff 52%, #fbeaf8 100%) fixed; }
+[data-theme='light'] .aurora i { filter: blur(100px); }
+[data-theme='light'] .grain { mix-blend-mode: multiply; opacity: 0.045; }
 
 * { box-sizing: border-box; }
 html { scroll-behavior: auto; -webkit-text-size-adjust: 100%; }
@@ -76,6 +81,8 @@ em, em .word { font-family: inherit; font-style: normal; font-weight: inherit; c
 :focus-visible { outline: 2px solid var(--accent-2); outline-offset: 3px; border-radius: 8px; }
 
 [data-theme='light'] .invert-light { filter: invert(1) hue-rotate(180deg); }
+/* Imagens que acompanham o tema do site: cada uma tem um par .theme-dark/.theme-light. */
+[data-theme='dark'] .theme-light, [data-theme='light'] .theme-dark { display: none !important; }
 
 /* ===== Fundo ===== */
 .aurora { position: fixed; top: 0; left: 0; right: 0; height: 114%; z-index: -2; overflow: hidden; pointer-events: none; }
@@ -96,9 +103,9 @@ em, em .word { font-family: inherit; font-style: normal; font-weight: inherit; c
     background: var(--glass);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    -webkit-backdrop-filter: blur(18px) saturate(140%);
-    backdrop-filter: blur(18px) saturate(140%);
-    box-shadow: var(--shadow);
+    -webkit-backdrop-filter: blur(26px) saturate(170%);
+    backdrop-filter: blur(26px) saturate(170%);
+    box-shadow: var(--shadow), var(--glass-hl);
 }
 
 .btn {
@@ -123,8 +130,8 @@ em, em .word { font-family: inherit; font-style: normal; font-weight: inherit; c
     pointer-events: auto; display: flex; align-items: center; justify-content: space-between; gap: 18px;
     width: min(1060px, 100%); padding: 10px 12px 10px 18px; border-radius: 999px;
     background: var(--glass); border: 1px solid var(--border);
-    -webkit-backdrop-filter: blur(20px) saturate(150%); backdrop-filter: blur(20px) saturate(150%);
-    box-shadow: var(--shadow);
+    -webkit-backdrop-filter: blur(26px) saturate(180%); backdrop-filter: blur(26px) saturate(180%);
+    box-shadow: var(--shadow), var(--glass-hl);
 }
 .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.01em; white-space: nowrap; }
 .nav-links { display: flex; gap: 4px; list-style: none; margin: 0; padding: 0; }
@@ -183,8 +190,6 @@ em, em .word { font-family: inherit; font-style: normal; font-weight: inherit; c
 .float img { width: 100%; height: auto; }
 .float-panel { width: 235px; right: -26px; top: -26px; transform: rotate(4deg); }
 .float-widget { width: 220px; left: -70px; bottom: -64px; transform: rotate(-5deg); z-index: 1; }
-[data-theme='light'] .float-panel img { content: url('assets/shots/desktop-popup-light.png'); }
-[data-theme='light'] .float-widget img { content: url('assets/shots/desktop-widget-light.png'); }
 
 /* ===== Faixa ===== */
 .marquee { overflow: hidden; border-block: 1px solid var(--border); padding: 18px 0; -webkit-mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }

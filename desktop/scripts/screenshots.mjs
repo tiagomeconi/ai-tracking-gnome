@@ -112,26 +112,27 @@ async function shot(file, { page, width, height = 400, css = '', js = '', fit = 
     console.log('✓', file);
 }
 
-async function trayGallery() {
+async function trayGallery(theme = 'dark') {
     const uri = (png) => `data:image/png;base64,${png.toString('base64')}`;
     const items = [[12, 'normal', 'Normal'], [58, 'normal', 'Normal'], [78, 'attention', 'Atenção'], [91, 'high', 'Alto'], [98, 'critical', 'Crítico']];
-    const cell = (png, label) => `<figure><img src="${uri(png)}" width="64" height="64"><figcaption>${label}</figcaption></figure>`;
+    // Cada ícone numa pastilha escura, como num painel/bandeja real (os ícones têm dígitos brancos).
+    const cell = (png, label) => `<figure><img src="${uri(png)}" width="64" height="64" style="background:#25252b;border-radius:16px;padding:8px"><figcaption>${label}</figcaption></figure>`;
     const html = `<!doctype html><meta charset="utf-8"><style>
-        body{margin:0;font:13px system-ui,sans-serif;background:#1f1f24;color:#eee;padding:18px 22px}
+        body{margin:0;font:13px system-ui,sans-serif;background:${theme === 'dark' ? '#1f1f24' : '#f4f1fb'};color:${theme === 'dark' ? '#eee' : '#26203f'};padding:18px 22px}
         .row{display:flex;gap:26px;margin:6px 0 14px;align-items:flex-end} figure{margin:0;text-align:center}
-        figcaption{margin-top:6px;color:#aaa;font-size:11px} h4{margin:4px 0;color:#c9b6ff;font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
+        figcaption{margin-top:6px;color:${theme === 'dark' ? '#aaa' : '#6b6488'};font-size:11px} h4{margin:4px 0;color:${theme === 'dark' ? '#c9b6ff' : '#6d3fd6'};font-weight:600;font-size:12px;letter-spacing:.04em;text-transform:uppercase}
     </style><h4>Velocímetro</h4><div class="row">${items.map(([p, s, l]) => cell(renderGaugeIcon(p, s, 128), `${p}% · ${l}`)).join('')}</div>
     <h4>Círculo com número</h4><div class="row">${items.map(([p, s, l]) => cell(renderTrayIcon(p, s, 64), `${p}% · ${l}`)).join('')}</div>`;
-    const w = new BrowserWindow({ width: 560 * SCALE, height: 300 * SCALE, show: true, frame: false, useContentSize: true, webPreferences: { zoomFactor: SCALE } });
+    const w = new BrowserWindow({ width: 600 * SCALE, height: 320 * SCALE, show: true, frame: false, useContentSize: true, webPreferences: { zoomFactor: SCALE } });
     await w.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
     w.webContents.setZoomFactor(SCALE);
     await sleep(500);
     const h = await w.webContents.executeJavaScript('document.body.scrollHeight');
-    w.setContentSize(560 * SCALE, h * SCALE);
+    w.setContentSize(600 * SCALE, h * SCALE);
     await sleep(300);
-    fs.writeFileSync(path.join(outDir, 'desktop-tray-icons.png'), (await w.webContents.capturePage()).toPNG());
+    fs.writeFileSync(path.join(outDir, `desktop-tray-icons-${theme}.png`), (await w.webContents.capturePage()).toPNG());
     await closeWindow(w);
-    console.log('✓ desktop-tray-icons.png');
+    console.log(`✓ desktop-tray-icons-${theme}.png`);
 }
 
 // Sem isto o Electron encerra ao fechar a primeira janela, no meio da série.
@@ -148,12 +149,15 @@ app.whenReady().then(async () => {
         js: wallpaper('linear-gradient(135deg,#3b2a6b,#1c1633 60%,#10243f)'),
     });
     const noScrollbar = '::-webkit-scrollbar{display:none}';
-    await shot('desktop-prefs.png', { page: 'prefs.html', width: 560, fixedHeight: 600, scale: 1.6, css: noScrollbar });
-    await shot('desktop-prefs-widget.png', { page: 'prefs.html', width: 560, fixedHeight: 560, scale: 1.6, css: noScrollbar, scrollTo: '#widget-enabled' });
-    await shot('desktop-stats.png', {
-        page: 'prefs.html', width: 560, fit: '#stats', pad: 24,
-        js: `document.getElementById('tab-stats').click()`,
-    });
+    const prefsShots = async (theme) => {
+        await shot(`desktop-prefs-${theme}.png`, { page: 'prefs.html', width: 560, fixedHeight: 600, scale: 1.6, css: noScrollbar });
+        await shot(`desktop-prefs-widget-${theme}.png`, { page: 'prefs.html', width: 560, fixedHeight: 560, scale: 1.6, css: noScrollbar, scrollTo: '#widget-enabled' });
+        await shot(`desktop-stats-${theme}.png`, {
+            page: 'prefs.html', width: 560, fit: '#stats', pad: 24,
+            js: `document.getElementById('tab-stats').click()`,
+        });
+    };
+    await prefsShots('dark');
 
     nativeTheme.themeSource = 'light';
     await shot('desktop-popup-light.png', { page: 'popup.html', width: 380, css: frame, fit: 'footer', scale: 1.5 });
@@ -161,8 +165,10 @@ app.whenReady().then(async () => {
         page: 'widget.html', width: 260, fit: '#widget', pad: 14,
         js: wallpaper('linear-gradient(135deg,#c7d7ff,#e9dcff 60%,#d3f0ff)'),
     });
+    await prefsShots('light');
+    await trayGallery('light');
     nativeTheme.themeSource = 'dark';
-    await trayGallery();
+    await trayGallery('dark');
 
     // Mockups do GNOME Shell (a extensão não roda no Electron): barra superior,
     // menu aberto e widget flutuante, com os estilos reais de extension/stylesheet.css.
