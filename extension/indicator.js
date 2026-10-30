@@ -282,6 +282,18 @@ class AIUsageIndicator extends PanelMenu.Button {
 
     /** Cria/atualiza/destrói o widget flutuante conforme `widget-enabled`. */
     _updateWidget(usages) {
+        // O widget é um extra: se ele falhar, o menu da barra tem que seguir funcionando.
+        try {
+            this._syncWidget(usages);
+        } catch (error) {
+            const log = typeof logError === 'function' ? logError : console.error;
+            log(error, 'AIUsageIndicator: falha no widget flutuante');
+            this._widget?.destroy();
+            this._widget = null;
+        }
+    }
+
+    _syncWidget(usages) {
         if (!this._settings)
             return;
         if (!this._settings.get_boolean('widget-enabled')) {

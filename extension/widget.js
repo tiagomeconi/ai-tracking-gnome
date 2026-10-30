@@ -16,6 +16,7 @@ const FILL_CLASS = {
 };
 
 const MARGIN = 16;
+const DOUBLE_CLICK_MS = 400;
 
 export class FloatingWidget {
     /**
@@ -34,14 +35,13 @@ export class FloatingWidget {
         });
         this.actor.opacity = this._opacity();
 
-        const drag = new Clutter.DragAction();
-        drag.connect('drag-end', () => this._savePosition());
-        this.actor.add_action(drag);
-        this.actor.connect('button-press-event', (_actor, event) => {
-            if (event.get_button() === 1 && typeof event.get_click_count === 'function' && event.get_click_count() === 2)
-                this._onOpen?.();
-            return Clutter.EVENT_PROPAGATE;
-        });
+        // Arraste manual (Clutter.DragAction não existe mais no GNOME 46):
+        // o clique captura o ponteiro (stage.grab) e a posição segue o mouse.
+        this._drag = null;
+        this._lastPress = { time: 0, x: 0, y: 0 };
+        this.actor.connect('button-press-event', (_actor, event) => this._onPress(event));
+        this.actor.connect('motion-event', (_actor, event) => this._onMotion(event));
+        this.actor.connect('button-release-event', () => this._onRelease());
         this._allocationId = this.actor.connect('notify::allocation', () => this._clampOnce());
 
         Main.layoutManager.addChrome(this.actor, { affectsInputRegion: true, trackFullscreen: true });
@@ -66,7 +66,51 @@ export class FloatingWidget {
         this._placed = false; // o tamanho mudou: reavalia a posição
     }
 
+    _onPress(event) {
+        if (event.get_button() !== 1)
+            return Clutter.EVENT_PROPAGATE;
+
+        const [x, y] = event.get_coords();
+        const time = event.get_time();
+        const last = this._lastPress;
+        const isDouble = time - last.time < DOUBLE_CLICK_MS && Math.hypot(x - last.x, y - last.y) < 6;
+        this._lastPress = { time: isDouble ? 0 : time, x, y };
+        if (isDouble) {
+            this._onOpen?.();
+            return Clutter.EVENT_STOP;
+        }
+
+        this._drag = {
+            pointer: [x, y],
+            origin: [this.actor.x, this.actor.y],
+            grab: global.stage.grab(this.actor),
+        };
+        return Clutter.EVENT_STOP;
+    }
+
+    _onMotion(event) {
+        if (!this._drag)
+            return Clutter.EVENT_PROPAGATE;
+
+        const [x, y] = event.get_coords();
+        const { pointer, origin } = this._drag;
+        this.actor.set_position(Math.round(origin[0] + x - pointer[0]), Math.round(origin[1] + y - pointer[1]));
+        return Clutter.EVENT_STOP;
+    }
+
+    _onRelease() {
+        if (!this._drag)
+            return Clutter.EVENT_PROPAGATE;
+
+        this._drag.grab.dismiss();
+        this._drag = null;
+        this._savePosition();
+        return Clutter.EVENT_STOP;
+    }
+
     destroy() {
+        this._drag?.grab.dismiss();
+        this._drag = null;
         if (this._allocationId) {
             this.actor.disconnect(this._allocationId);
             this._allocationId = null;
