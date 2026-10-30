@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Mockup GNOME Shell (para screenshots)</title>
+<style>
+    /* Mockup do GNOME Shell 46 + estilos reais da extensão (extension/stylesheet.css).
+       Só serve para gerar os screenshots do README/site: `npm run screenshots`. */
+    * { box-sizing: border-box; }
+    html, body { margin: 0; background: transparent; overflow: hidden; }
+    body { font: 14px/1.4 Cantarell, 'Noto Sans', Inter, system-ui, sans-serif; color: #eeeeec; -webkit-font-smoothing: antialiased; }
+    #stage { position: relative; overflow: hidden; border-radius: 22px; width: var(--w, 560px);
+        background:
+            radial-gradient(circle at 18% 12%, rgba(167, 139, 250, .85), transparent 46%),
+            radial-gradient(circle at 88% 30%, rgba(34, 211, 238, .55), transparent 44%),
+            radial-gradient(circle at 40% 100%, rgba(236, 72, 153, .5), transparent 50%),
+            linear-gradient(135deg, #2b1861, #17102f 60%, #0d2038); }
+
+    /* ---- Barra superior ---- */
+    .panel { height: 32px; display: flex; align-items: center; justify-content: space-between; padding: 0 6px; background: #000; font-weight: 700; font-size: 13px; position: relative; }
+    .panel.rounded { border-radius: 16px; margin: 0; }
+    .panel .left, .panel .right { display: flex; align-items: center; gap: 2px; flex: 1; }
+    .panel .right { justify-content: flex-end; }
+    .panel .center { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; }
+    .indicator span { white-space: nowrap; }
+    .popup.static { position: relative; right: auto; top: auto; margin: 6px 14px 22px auto; }
+    .pill { height: 26px; padding: 0 11px; border-radius: 13px; display: flex; align-items: center; gap: 6px; }
+    .pill.active { background: rgba(255, 255, 255, .18); }
+    .dots { display: flex; gap: 5px; align-items: center; padding: 0 10px; }
+    .dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255, 255, 255, .45); }
+    .dots i.on { width: 18px; border-radius: 4px; background: #fff; }
+    .sys { display: flex; gap: 12px; align-items: center; padding: 0 12px; height: 26px; border-radius: 13px; }
+    .sys svg { width: 16px; height: 16px; fill: none; stroke: #eeeeec; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .indicator img { width: 16px; height: 16px; }
+    .indicator { gap: 6px; }
+
+    /* ---- Menu (PopupMenu) ---- */
+    .popup { position: absolute; right: 14px; top: 38px; width: 352px; background: #2b2b2b; border: 1px solid rgba(255, 255, 255, .1); border-radius: 14px; box-shadow: 0 10px 30px rgba(0, 0, 0, .55); padding: 8px 0; }
+    .row { padding: 6px 14px; display: grid; gap: 2px; }
+    .hd { display: flex; align-items: center; gap: 8px; }
+    .hd img { width: 28px; height: 28px; border-radius: 4px; object-fit: contain; }
+    .hd b { flex: 1; font-weight: 700; }
+    .hd svg { width: 15px; height: 15px; stroke: #ccc; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; margin-right: 4px; }
+    .win { margin-top: 4px; display: grid; gap: 2px; }
+    .track { height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .15); overflow: hidden; }
+    .fill { height: 8px; border-radius: 4px; }
+    .normal { background: #3a9c3a; } .attention { background: #d0a020; } .high { background: #d97706; } .critical { background: #cc3333; }
+    .lbl { font-size: .9em; } .reset { font-size: .8em; color: #999; } .budget { font-size: .8em; font-style: italic; color: #7a9bbf; }
+    .sep { height: 1px; background: rgba(255, 255, 255, .1); margin: 6px 0; }
+    .sub { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; margin: 0 6px; border-radius: 8px; }
+    .sub svg { width: 14px; height: 14px; stroke: #ccc; fill: none; stroke-width: 2.4; }
+    .foot { display: flex; align-items: center; gap: 8px; padding: 4px 14px 2px; }
+    .foot img { width: 34px; height: 34px; }
+    .foot span { flex: 1; color: #999; font-size: .85em; }
+    .foot svg { width: 18px; height: 18px; stroke: #ccc; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; margin-left: 10px; }
+
+    /* ---- Widget flutuante (mesmo estilo de .ai-usage-widget) ---- */
+    .widget { position: absolute; background: rgba(30, 30, 30, .92); border: 1px solid rgba(255, 255, 255, .15); border-radius: 12px; padding: 6px 12px; min-width: 210px; color: #f0f0f0; box-shadow: 0 14px 36px rgba(0, 0, 0, .5); }
+    .wrow { padding: 4px 0; display: grid; gap: 3px; }
+    .whd { display: flex; align-items: center; gap: 8px; } .whd img { width: 16px; height: 16px; } .whd b { flex: 1; font-weight: 700; }
+    .wdetail { font-size: .75em; color: #b0b0b0; }
+
+    /* ---- Janela falsa ao fundo (só decoração do widget) ---- */
+    .bgwin { position: absolute; left: 34px; top: 34px; width: 330px; height: 250px; border-radius: 12px; background: rgba(24, 24, 28, .78); border: 1px solid rgba(255, 255, 255, .1); box-shadow: 0 20px 50px rgba(0, 0, 0, .4); padding: 14px; }
+    .bgwin .bar { height: 10px; width: 60px; border-radius: 5px; background: rgba(255, 255, 255, .18); margin-bottom: 14px; }
+    .bgwin .ln { height: 8px; border-radius: 4px; margin: 9px 0; background: rgba(255, 255, 255, .1); }
+    .bgwin .ln.a { width: 78%; background: rgba(167, 139, 250, .45); } .bgwin .ln.b { width: 52%; } .bgwin .ln.c { width: 66%; background: rgba(34, 211, 238, .38); } .bgwin .ln.d { width: 40%; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+    const ICON = (id) => `../assets/icons/${id}.png`;
+    const arrow = '<svg viewBox="0 0 24 24"><path d="M7 17 17 7M8 7h9v9"/></svg>';
+    const sys = `<div class="sys">
+        <svg viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5 13a10 10 0 0 1 14 0M8.5 16.5a5 5 0 0 1 7 0"/><circle cx="12" cy="20" r="1" fill="#eeeeec"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M11 5 6 9H3v6h3l5 4zM15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/></svg>
+        <svg viewBox="0 0 24 24"><path d="M12 3v8M6.4 6.6a8 8 0 1 0 11.2 0"/></svg></div>`;
+    const colors = { normal: '#3a9c3a', attention: '#d0a020', high: '#d97706', critical: '#cc3333' };
+    const stateOf = (p) => (p >= 95 ? 'critical' : p >= 85 ? 'high' : p >= 70 ? 'attention' : 'normal');
+    const STATE = { normal: 'Normal', attention: 'Atenção', high: 'Alto', critical: 'Crítico' };
+
+    function gaugeSvg(p) {
+        const L = Math.PI * 9, s = stateOf(p), a = (-90 + p * 1.8) * Math.PI / 180;
+        return `<svg width="22" height="14" viewBox="0 0 22 14"><path d="M2 12 A9 9 0 0 1 20 12" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M2 12 A9 9 0 0 1 20 12" fill="none" stroke="${colors[s]}" stroke-width="3" stroke-linecap="round" stroke-dasharray="${L} ${L}" stroke-dashoffset="${L * (1 - p / 100)}"/></svg>`;
+    }
+    const panelBar = ({ style = 'logo', pct = 62, name = 'Claude', open = false, rounded = false, compact = false } = {}) => `
+        <div class="panel ${rounded ? 'rounded' : ''}">
+            <div class="left"><div class="pill">Atividades</div>${compact ? '' : '<div class="dots"><i class="on"></i><i></i><i></i></div>'}</div>
+            ${compact ? '' : '<div class="center">qui 29 out&nbsp;&nbsp;21:45</div>'}
+            <div class="right">
+                <div class="pill indicator ${open ? 'active' : ''}">${style === 'gauge' ? gaugeSvg(pct) : `<img src="${ICON('logo')}" alt="">`}<span>${name} ${pct}%</span></div>
+                ${sys}
+            </div>
+        </div>`;
+
+    const win = (label, pct, reset, budget) => {
+        const s = stateOf(pct);
+        return `<div class="win"><div class="track"><div class="fill ${s}" style="width:${pct}%"></div></div>
+            <div class="lbl">${label} — ${pct}% · ${STATE[s]}</div><div class="reset">${reset}</div><div class="budget">${budget}</div></div>`;
+    };
+    const provider = (id, name, wins) => `<div class="row"><div class="hd"><img src="${ICON(id)}" alt=""><b>${name}</b>${arrow}</div>${wins.join('')}</div>`;
+
+    const popup = () => `<div class="popup static">
+        ${provider('claude', 'Claude', [win('Janela de 5 horas', 62, 'Renova em 2 h 15 min', 'Ritmo seguro: ~16,9 %/h até renovar'), win('Janela de 7 dias', 87, 'Renova em 3 dias', 'Ritmo seguro: ~4,2 %/dia até renovar')])}
+        <div class="sep"></div>
+        ${provider('codex', 'Codex (ChatGPT)', [win('Janela de 5 hora(s)', 18, 'Renova em 4 h 10 min', 'Ritmo seguro: ~19,7 %/h até renovar'), win('Janela de 1 semana(s)', 34, 'Renova em 5 dias', 'Ritmo seguro: ~13,2 %/dia até renovar')])}
+        <div class="sep"></div>
+        ${provider('gemini', 'Antigravity', [])}
+        <div class="sub"><span>Ver 6 janelas de uso</span><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+        <div class="sep"></div>
+        <div class="foot"><img src="${ICON('logo')}" alt=""><span>agora mesmo</span>
+            <svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.6M20 4v5h-5"/></svg>
+            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></div>
+    </div>`;
+
+    const widget = (style) => {
+        const rows = [['claude', 'Claude', 'Janela de 5 horas', 62, 'renova em 2 h 15 min'], ['codex', 'Codex', 'Janela de 1 semana(s)', 34, 'renova em 5 dias'], ['gemini', 'Antigravity', 'Gemini 3 Pro', 41, 'renova em 5 h']];
+        return `<div class="widget" style="${style}">${rows.map(([id, name, label, p, reset]) => `
+            <div class="wrow"><div class="whd"><img src="${ICON(id)}" alt=""><b>${name}</b><span>${p}%</span></div>
+            <div class="track"><div class="fill ${stateOf(p)}" style="width:${p}%"></div></div>
+            <div class="wdetail">${label} · ${reset}</div></div>`).join('')}</div>`;
+    };
+
+    const variant = new URLSearchParams(location.search).get('v') || 'popup';
+    const stage = document.getElementById('stage');
+    if (variant === 'topbar') {
+        stage.style.setProperty('--w', '640px');
+        stage.style.padding = '26px 28px';
+        stage.innerHTML = `<div style="display:grid;gap:18px">${panelBar({ style: 'logo', pct: 62, rounded: true })}${panelBar({ style: 'gauge', pct: 87, rounded: true })}</div>`;
+    } else if (variant === 'popup') {
+        stage.style.setProperty('--w', '430px');
+        stage.innerHTML = `${panelBar({ style: 'logo', pct: 62, open: true, compact: true })}${popup()}`;
+    } else if (variant === 'widget') {
+        stage.style.setProperty('--w', '560px');
+        stage.style.height = '340px';
+        stage.innerHTML = `<div class="bgwin"><div class="bar"></div><div class="ln a"></div><div class="ln b"></div><div class="ln c"></div><div class="ln d"></div><div class="ln a"></div><div class="ln b"></div><div class="ln c"></div></div>${widget('right:34px;bottom:28px')}`;
+    }
+</script>
+</body>
+</html>

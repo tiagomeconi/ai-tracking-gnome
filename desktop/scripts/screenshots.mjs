@@ -72,10 +72,10 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Destruir a janela anterior logo antes de carregar a próxima faz o loadFile
 // falhar às vezes (ERR_FAILED -2): espera e tenta de novo.
-async function loadWithRetry(w, file) {
+async function loadWithRetry(w, file, query = {}) {
     for (let attempt = 1; ; attempt++) {
         try {
-            await w.loadFile(file);
+            await w.loadFile(file, { query });
             return;
         } catch (error) {
             if (attempt >= 4)
@@ -90,12 +90,12 @@ async function closeWindow(w) {
     await sleep(500);
 }
 
-async function shot(file, { page, width, height = 400, css = '', js = '', fit = 'body', pad = 0, scale = SCALE, fixedHeight = 0, scrollTo = '' }) {
+async function shot(file, { page, width, height = 400, css = '', js = '', fit = 'body', pad = 0, scale = SCALE, fixedHeight = 0, scrollTo = '', query = {}, transparent = false }) {
     const w = new BrowserWindow({
-        width: Math.round(width * scale), height: Math.round(height * scale), show: true, frame: false, useContentSize: true,
+        width: Math.round(width * scale), height: Math.round(height * scale), show: true, frame: false, useContentSize: true, transparent,
         webPreferences: { preload, contextIsolation: true, sandbox: true, zoomFactor: scale },
     });
-    await loadWithRetry(w, path.join(rendererDir, page));
+    await loadWithRetry(w, path.isAbsolute(page) ? page : path.join(rendererDir, page), query);
     w.webContents.setZoomFactor(scale);
     await w.webContents.insertCSS(`html,body{background:transparent} ${css}`);
     if (js)
@@ -163,5 +163,12 @@ app.whenReady().then(async () => {
     });
     nativeTheme.themeSource = 'dark';
     await trayGallery();
+
+    // Mockups do GNOME Shell (a extensão não roda no Electron): barra superior,
+    // menu aberto e widget flutuante, com os estilos reais de extension/stylesheet.css.
+    const gnome = path.join(here, 'gnome-mock.html');
+    await shot('gnome-topbar.png', { page: gnome, width: 640, fit: '#stage', query: { v: 'topbar' }, scale: 2, transparent: true });
+    await shot('gnome-popup.png', { page: gnome, width: 420, fit: '#stage', query: { v: 'popup' }, scale: 1.8, transparent: true });
+    await shot('gnome-widget.png', { page: gnome, width: 560, fit: '#stage', query: { v: 'widget' }, scale: 2, transparent: true });
     app.quit();
 });

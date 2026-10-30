@@ -406,6 +406,17 @@
     // Cadeado fecha ao entrar.
     ScrollTrigger.create({ trigger: '.privacy', start: 'top 70%', once: true, onEnter: () => $('.privacy').classList.add('locked') });
 
+    // Imagens preguiçosas e fontes mudam a altura da página depois da primeira
+    // medição: remede as posições (com debounce) quando terminarem de carregar.
+    let refreshTimer = null;
+    const scheduleRefresh = () => {
+        clearTimeout(refreshTimer);
+        refreshTimer = setTimeout(() => ScrollTrigger.refresh(), 150);
+    };
+    window.addEventListener('load', scheduleRefresh);
+    document.fonts?.ready.then(scheduleRefresh);
+    $$('img[loading="lazy"]').forEach((img) => { if (!img.complete) img.addEventListener('load', scheduleRefresh, { once: true }); });
+
     // Leve parallax do aurora.
     gsap.to('.aurora', { yPercent: -8, ease: 'none', scrollTrigger: { start: 0, end: 'max', scrub: true } });
 })();
