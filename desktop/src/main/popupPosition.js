@@ -49,3 +49,8 @@ export function resolveWidgetPosition(saved, size, workAreas, primary) {
         y: Math.round(primary.y + primary.height - size.height - 16),
     };
 }
+
+/** Âncora de tamanho zero no canto inferior direito da área útil (bandeja sem posição conhecida). */
+export function cornerAnchor(workArea) {
+    return { x: workArea.x + workArea.width, y: workArea.y + workArea.height, width: 0, height: 0 };
+}

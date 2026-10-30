@@ -17,7 +17,8 @@ import { CodexSubscriptionProvider } from './providers/codexSubscription.js';
 import { AntigravitySubscriptionProvider } from './providers/antigravitySubscription.js';
 import { indicatorText, trayReading, thresholdNotificationText } from './viewModel.js';
 import { renderTrayIcon, renderGaugeIcon } from './trayIcon.js';
-import { computePopupPosition, resolveWidgetPosition } from './popupPosition.js';
+import { isWaylandSession, shouldRelaunchForX11 } from './displayServer.js';
+import { computePopupPosition, resolveWidgetPosition, cornerAnchor } from './popupPosition.js';
 import { aggregateDailyMax } from '../shared/historyChart.js';
 import { listHistorySeries } from '../shared/history.js';
 
@@ -39,7 +40,21 @@ const PROVIDER_CHOICES = [
     { id: 'copilot', name: 'Copilot', dev: true },
 ];
 
-const gotSingleInstanceLock = app.requestSingleInstanceLock();
+// Electron >= 38 roda nativo em Wayland por padrão, e lá o app não pode
+// posicionar/mover a própria janela (setBounds/setPosition são ignorados e
+// getCursorScreenPoint não existe): painel e widget ficavam imóveis no KDE
+// Plasma 6. Precisamos de XWayland, onde o posicionamento funciona. A
+// plataforma gráfica é escolhida antes do JS rodar (appendSwitch aqui não
+// tem efeito), então o app se relança uma vez com --ozone-platform=x11.
+// (ver displayServer.js). AI_USAGE_NATIVE_WAYLAND=1 mantém o modo nativo (sem arrastar/posicionar).
+const waylandSession = isWaylandSession(process.platform, process.env);
+const needsX11Relaunch = shouldRelaunchForX11(process.platform, process.env, app.commandLine.getSwitchValue('ozone-platform'));
+if (needsX11Relaunch) {
+    app.relaunch({ args: [...process.argv.slice(1), '--ozone-platform=x11'] });
+    app.exit(0);
+}
+
+const gotSingleInstanceLock = needsX11Relaunch ? false : app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock)
     app.quit();
 
@@ -165,10 +180,17 @@ function setWidgetEnabled(enabled) {
 
 function positionPopup() {
     let anchor = tray.getBounds();
-    // Linux: muitos ambientes devolvem 0x0 -> ancora no cursor.
+    // Linux: muitos ambientes devolvem 0x0 -> ancora no cursor. Em sessão
+    // Wayland (XWayland) o cursor só é atualizado sobre janelas X11 — o clique
+    // na bandeja (superfície Wayland do Plasma) deixaria o ponto desatualizado;
+    // aí usamos o canto inferior direito da tela, onde a bandeja costuma ficar.
     if (!anchor || (anchor.width === 0 && anchor.height === 0)) {
-        const point = screen.getCursorScreenPoint();
-        anchor = { x: point.x, y: point.y, width: 0, height: 0 };
+        if (waylandSession) {
+            anchor = cornerAnchor(screen.getPrimaryDisplay().workArea);
+        } else {
+            const point = screen.getCursorScreenPoint();
+            anchor = { x: point.x, y: point.y, width: 0, height: 0 };
+        }
     }
     const display = screen.getDisplayNearestPoint({ x: anchor.x, y: anchor.y });
     const { x, y } = computePopupPosition(anchor, { width: POPUP_WIDTH, height: popupHeight }, display.workArea);

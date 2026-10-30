@@ -58,6 +58,12 @@ history in `%LOCALAPPDATA%\ai-usage-monitor` / `~/.cache/ai-usage-monitor`
   the percentage of the provider closest to its limit, colored by state
   (green / yellow / orange / red). Left-click opens the panel, right-click the
   menu. "Start with system" is in Preferences.
+- **Linux / Wayland (KDE Plasma 6, etc.)** — Electron ≥ 38 runs natively on
+  Wayland, where an app can't move or position its own windows (so the panel
+  and widget couldn't be dragged). On a Wayland session the app therefore
+  relaunches itself once with `--ozone-platform=x11` (XWayland). Set
+  `AI_USAGE_NATIVE_WAYLAND=1` to opt out (dragging/positioning won't work).
+  Without a known tray position the panel opens at the bottom-right corner.
 - **Linux** — needs a system tray: KDE, XFCE, Cinnamon, MATE work out of the
   box (on KDE, left-click should open the panel and right-click the menu —
   newly added, still to be confirmed); on GNOME it needs the *AppIndicator* extension (but then just use the

@@ -8,7 +8,8 @@ import { dataDir, configDir, claudeConfigDir } from '../src/main/paths.js';
 import { SettingsStore, sanitizeSettings } from '../src/main/settings.js';
 import { UsageHistoryStore } from '../src/main/historyStore.js';
 import { readKeyringSecret, decodeWindowsBlob } from '../src/main/credentials.js';
-import { computePopupPosition, resolveWidgetPosition } from '../src/main/popupPosition.js';
+import { isWaylandSession, shouldRelaunchForX11 } from '../src/main/displayServer.js';
+import { computePopupPosition, resolveWidgetPosition, cornerAnchor } from '../src/main/popupPosition.js';
 
 test('paths: Windows usa LOCALAPPDATA/APPDATA', () => {
     const env = { LOCALAPPDATA: 'C:\\Users\\a\\AppData\\Local', APPDATA: 'C:\\Users\\a\\AppData\\Roaming' };
@@ -141,4 +142,23 @@ test('resolveWidgetPosition: usa a salva se visível; senão canto inferior dire
     assert.deepEqual(resolveWidgetPosition({ x: 300, y: 200 }, size, [area], area), { x: 300, y: 200 });
     assert.deepEqual(resolveWidgetPosition({ x: 5000, y: 200 }, size, [area], area), { x: 1694, y: 924 });
     assert.deepEqual(resolveWidgetPosition(null, size, [area], area), { x: 1694, y: 924 });
+});
+
+test('cornerAnchor: popup sem posição da bandeja abre acima, colado no canto direito', () => {
+    const area = { x: 0, y: 0, width: 1920, height: 1040 };
+    const anchor = cornerAnchor(area);
+    assert.deepEqual(anchor, { x: 1920, y: 1040, width: 0, height: 0 });
+    assert.deepEqual(computePopupPosition(anchor, { width: 380, height: 300 }, area), { x: 1532, y: 732 });
+});
+
+test('displayServer: relança em XWayland só em sessão Wayland que ainda não está em x11', () => {
+    const wayland = { XDG_SESSION_TYPE: 'wayland' };
+    assert.equal(shouldRelaunchForX11('linux', wayland, 'wayland'), true);
+    assert.equal(shouldRelaunchForX11('linux', wayland, ''), true);
+    assert.equal(shouldRelaunchForX11('linux', wayland, 'x11'), false); // já relançado: sem loop
+    assert.equal(shouldRelaunchForX11('linux', { WAYLAND_DISPLAY: 'wayland-0' }, 'wayland'), true);
+    assert.equal(shouldRelaunchForX11('linux', { XDG_SESSION_TYPE: 'x11' }, 'x11'), false);
+    assert.equal(shouldRelaunchForX11('linux', { ...wayland, AI_USAGE_NATIVE_WAYLAND: '1' }, 'wayland'), false);
+    assert.equal(shouldRelaunchForX11('win32', wayland, 'wayland'), false);
+    assert.equal(isWaylandSession('linux', {}), false);
 });
