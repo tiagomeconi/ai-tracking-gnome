@@ -111,6 +111,11 @@ function createPopup() {
         skipTaskbar: true,
         alwaysOnTop: true,
         fullscreenable: false,
+        // Windows mantém uma "moldura grossa" invisível mesmo com frame:false;
+        // arrastar a janela com setBounds acumula arredondamento de DPI contra
+        // essa moldura e a janela cresce a cada movimento. thickFrame:false
+        // remove essa moldura (sem efeito em outras plataformas).
+        thickFrame: false,
         webPreferences: secureWebPreferences(),
     });
     popup.loadFile(path.join(rendererDir, 'popup.html'));
@@ -151,6 +156,9 @@ function createWidget() {
         skipTaskbar: true,
         alwaysOnTop: true,
         focusable: false, // não rouba o foco dos outros aplicativos
+        // Ver comentário equivalente em createPopup(): evita o widget "crescer"
+        // sozinho ao ser arrastado no Windows.
+        thickFrame: false,
         webPreferences: secureWebPreferences(),
     });
     widget.setAlwaysOnTop(true, 'floating');
@@ -217,9 +225,15 @@ function openPreferences() {
         prefsWindow.focus();
         return;
     }
+    // Em telas pequenas (notebooks Windows com escala de DPI alta) 620px de
+    // altura pode não caber na área útil da tela, empurrando a seção de
+    // notificações/limites para fora do que é visível. Limita à tela e deixa
+    // o conteúdo rolar (ver overflow-y em prefs.css).
+    const workArea = screen.getDisplayNearestPoint(screen.getCursorScreenPoint()).workArea;
+    const height = Math.min(620, workArea.height - 16);
     prefsWindow = new BrowserWindow({
         width: 560,
-        height: 620,
+        height,
         title: 'AI Usage Monitor — Preferências',
         autoHideMenuBar: true,
         webPreferences: secureWebPreferences(),
